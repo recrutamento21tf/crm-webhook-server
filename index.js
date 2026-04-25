@@ -10,7 +10,7 @@ app.use(express.json());
 const EVOLUTION_API_URL  = "https://crm-evolution-api.onrender.com";
 const EVOLUTION_INSTANCE = "recrutamento";
 const EVOLUTION_API_KEY  = "CrmRh@2026";
-const CODIGO_PAIS        = "81";
+const CODIGO_PAIS        = "";
 
 // ============================================================
 //  📨  ENVIAR WHATSAPP
