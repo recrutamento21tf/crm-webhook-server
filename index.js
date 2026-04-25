@@ -14,6 +14,7 @@ const EVOLUTION_INSTANCE = "recrutamento";
 const EVOLUTION_API_KEY  = "CrmRh@2026";
 const SPREADSHEET_ID     = "1Z1HHv264Tvda117uPK-4flFwrg-_Kig4BG2I1qcst4w";
 const CREDENTIALS_PATH   = path.join(__dirname, "credentials.json");
+const WEB_APP_URL        = "https://script.google.com/macros/s/AKfycbw7W_41GqdyE_pd0x47fBDzE-34jmMRYfIcWxcSnWb6jXH1x_ayMLcXg-linOoBKiojIg/exec";
 
 // ============================================================
 //  📊  GOOGLE SHEETS — Autenticação
@@ -64,8 +65,8 @@ async function listarVagas() {
 // ============================================================
 async function consultarCandidato(telefone) {
   try {
-    const sheets  = await getSheets();
-    const dados   = await lerAba(sheets, "Candidatos");
+    const sheets   = await getSheets();
+    const dados    = await lerAba(sheets, "Candidatos");
     const telLimpo = String(telefone).replace(/\D/g, "");
 
     for (let i = 1; i < dados.length; i++) {
@@ -82,6 +83,33 @@ async function consultarCandidato(telefone) {
   } catch (err) {
     console.error("Erro ao consultar candidato:", err.message);
     return "Não foi possível consultar sua candidatura agora. Tente novamente em instantes.";
+  }
+}
+
+// ============================================================
+//  👥  BUSCAR FUNCIONÁRIO PELO TELEFONE
+// ============================================================
+async function buscarFuncionario(telefone) {
+  try {
+    const sheets   = await getSheets();
+    const dados    = await lerAba(sheets, "Funcionários");
+    const telLimpo = String(telefone).replace(/\D/g, "");
+
+    for (let i = 1; i < dados.length; i++) {
+      const telPlanilha = String(dados[i][4] || "").replace(/\D/g, "");
+      if (telPlanilha && telLimpo.includes(telPlanilha.slice(-8))) {
+        return {
+          encontrou:  true,
+          nome:       dados[i][1],
+          registro:   dados[i][0],
+          status:     dados[i][7]
+        };
+      }
+    }
+    return { encontrou: false };
+  } catch (err) {
+    console.error("Erro ao buscar funcionário:", err.message);
+    return { encontrou: false };
   }
 }
 
@@ -108,7 +136,7 @@ async function enviarWhatsApp(telefone, mensagem) {
     });
 
     const json = await resp.json();
-    console.log("==> Resposta Evolution API:", resp.status, JSON.stringify(json));
+    console.log("==> Resposta Evolution API:", resp.status);
 
   } catch (err) {
     console.error("==> Erro ao enviar WhatsApp:", err.message);
@@ -129,7 +157,6 @@ app.post("/webhook", async (req, res) => {
     }
 
     if (dados?.data?.key?.fromMe === true) {
-      console.log("==> Mensagem própria ignorada");
       return res.status(200).json({ ok: true });
     }
 
@@ -149,7 +176,8 @@ app.post("/webhook", async (req, res) => {
         "1️⃣ Ver vagas abertas\n" +
         "2️⃣ Status da minha candidatura\n" +
         "3️⃣ Falar com um recrutador\n" +
-        "4️⃣ Enviar currículo"
+        "4️⃣ Enviar currículo\n" +
+        "5️⃣ Acompanhar minhas indicações"
       );
 
     } else if (msg === "1") {
@@ -169,10 +197,26 @@ app.post("/webhook", async (req, res) => {
 
     } else if (msg === "4") {
       await enviarWhatsApp(de,
-        "📄 Para enviar seu currículo acesse o formulário abaixo e preencha seus dados:\n\n" +
+        "📄 Para enviar seu currículo acesse o formulário abaixo:\n\n" +
         "🔗 https://docs.google.com/forms/d/e/1FAIpQLScxeXcoSiFIQWvyFmt4FJhuQDyKev_9Gca7NZnbM5fKyLw3hA/viewform\n\n" +
         "Em breve nossa equipe entrará em contato! 😊"
       );
+
+    } else if (msg === "5") {
+      // Busca funcionário pelo telefone
+      const func = await buscarFuncionario(de);
+      if (func.encontrou && func.status === "Ativo") {
+        const link = `${WEB_APP_URL}?id=${func.registro}`;
+        await enviarWhatsApp(de,
+          `🔗 Olá, *${func.nome}*! Acesse suas indicações pelo link:\n\n${link}\n\n` +
+          `Você pode salvar este link para acompanhar a qualquer momento! 😊`
+        );
+      } else {
+        await enviarWhatsApp(de,
+          "Não encontramos seu cadastro como funcionário ativo.\n\n" +
+          "Se você é funcionário, entre em contato com o RH para cadastrar seu número. 😊"
+        );
+      }
 
     } else {
       await enviarWhatsApp(de,
