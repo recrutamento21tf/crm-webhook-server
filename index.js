@@ -1,6 +1,8 @@
-const express = require("express");
-const fetch   = require("node-fetch");
-const app     = express();
+const express     = require("express");
+const fetch       = require("node-fetch");
+const { google }  = require("googleapis");
+const path        = require("path");
+const app         = express();
 
 app.use(express.json());
 
@@ -10,7 +12,78 @@ app.use(express.json());
 const EVOLUTION_API_URL  = "https://crm-evolution-api.onrender.com";
 const EVOLUTION_INSTANCE = "recrutamento";
 const EVOLUTION_API_KEY  = "CrmRh@2026";
-const CODIGO_PAIS        = "";
+const SPREADSHEET_ID     = "1Z1HHv264Tvda117uPK-4flFwrg-_Kig4BG2I1qcst4w";
+const CREDENTIALS_PATH   = path.join(__dirname, "credentials.json");
+
+// ============================================================
+//  📊  GOOGLE SHEETS — Autenticação
+// ============================================================
+async function getSheets() {
+  const auth = new google.auth.GoogleAuth({
+    keyFile: CREDENTIALS_PATH,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+  const client = await auth.getClient();
+  return google.sheets({ version: "v4", auth: client });
+}
+
+async function lerAba(sheets, aba) {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${aba}!A:Z`,
+  });
+  return res.data.values || [];
+}
+
+// ============================================================
+//  📢  LISTAR VAGAS ABERTAS
+// ============================================================
+async function listarVagas() {
+  try {
+    const sheets = await getSheets();
+    const dados  = await lerAba(sheets, "Vagas");
+    let lista = "📢 *Vagas Abertas:*\n\n";
+    let encontrou = false;
+    for (let i = 1; i < dados.length; i++) {
+      if (dados[i][4] === "Aberta") {
+        lista += `▪️ *${dados[i][1]}* — ${dados[i][9] || "Modalidade a confirmar"}\n`;
+        encontrou = true;
+      }
+    }
+    return encontrou
+      ? lista + "\nPara se candidatar, peça o link de indicação ao seu RH!"
+      : "Não há vagas abertas no momento. Em breve teremos novidades! 😊";
+  } catch (err) {
+    console.error("Erro ao listar vagas:", err.message);
+    return "Não foi possível carregar as vagas agora. Tente novamente em instantes.";
+  }
+}
+
+// ============================================================
+//  🔍  CONSULTAR STATUS DO CANDIDATO
+// ============================================================
+async function consultarCandidato(telefone) {
+  try {
+    const sheets  = await getSheets();
+    const dados   = await lerAba(sheets, "Candidatos");
+    const telLimpo = String(telefone).replace(/\D/g, "");
+
+    for (let i = 1; i < dados.length; i++) {
+      const telPlanilha = String(dados[i][2] || "").replace(/\D/g, "");
+      if (telPlanilha && telLimpo.includes(telPlanilha.slice(-8))) {
+        return `📋 Olá, *${dados[i][1]}*!\n\n` +
+               `▪️ Vaga: *${dados[i][4]}*\n` +
+               `▪️ Etapa atual: *${dados[i][8]}*\n` +
+               `▪️ Status: *${dados[i][9]}*\n\n` +
+               `Qualquer dúvida, responda *3* para falar com um recrutador.`;
+      }
+    }
+    return "Não encontramos sua candidatura. Verifique se o número cadastrado é este ou fale com o RH (opção 3).";
+  } catch (err) {
+    console.error("Erro ao consultar candidato:", err.message);
+    return "Não foi possível consultar sua candidatura agora. Tente novamente em instantes.";
+  }
+}
 
 // ============================================================
 //  📨  ENVIAR WHATSAPP
@@ -20,7 +93,7 @@ async function enviarWhatsApp(telefone, mensagem) {
     const numero = String(telefone).replace(/\D/g, "");
     const url    = `${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE}`;
 
-    console.log("==> Enviando WhatsApp para:", CODIGO_PAIS + numero);
+    console.log("==> Enviando WhatsApp para:", numero);
 
     const resp = await fetch(url, {
       method: "POST",
@@ -29,7 +102,7 @@ async function enviarWhatsApp(telefone, mensagem) {
         apikey: EVOLUTION_API_KEY
       },
       body: JSON.stringify({
-        number: `${CODIGO_PAIS}${numero}`,
+        number: numero,
         text:   mensagem
       })
     });
@@ -51,12 +124,10 @@ app.post("/webhook", async (req, res) => {
 
     console.log("==> Evento recebido:", dados?.event);
 
-    // Ignora eventos que não são mensagens
     if (dados?.event !== "messages.upsert") {
       return res.status(200).json({ ok: true });
     }
 
-    // Ignora mensagens enviadas pelo próprio bot
     if (dados?.data?.key?.fromMe === true) {
       console.log("==> Mensagem própria ignorada");
       return res.status(200).json({ ok: true });
@@ -67,15 +138,12 @@ app.post("/webhook", async (req, res) => {
 
     console.log("==> Mensagem:", msg, "| De:", de);
 
-    if (!msg || !de) {
-      console.log("==> Mensagem ou remetente vazio — ignorado");
-      return res.status(200).json({ ok: true });
-    }
+    if (!msg || !de) return res.status(200).json({ ok: true });
 
     // ============================================================
     //  🤖  RESPOSTAS DO BOT
     // ============================================================
-    if (["oi", "olá", "ola", "menu", "hello", "oii", "ola!"].includes(msg)) {
+    if (["oi", "olá", "ola", "menu", "hello", "oii", "inicio", "início"].includes(msg)) {
       await enviarWhatsApp(de,
         "Olá! 👋 Sou o assistente de RH.\n\nEscolha uma opção:\n\n" +
         "1️⃣ Ver vagas abertas\n" +
@@ -85,19 +153,31 @@ app.post("/webhook", async (req, res) => {
       );
 
     } else if (msg === "1") {
-      await enviarWhatsApp(de, "📢 Vagas abertas em breve disponíveis aqui! Aguarde.");
+      const vagas = await listarVagas();
+      await enviarWhatsApp(de, vagas);
 
     } else if (msg === "2") {
-      await enviarWhatsApp(de, "🔍 Para consultar sua candidatura, informe seu e-mail cadastrado.");
+      const status = await consultarCandidato(de);
+      await enviarWhatsApp(de, status);
 
     } else if (msg === "3") {
-      await enviarWhatsApp(de, "👤 Um recrutador entrará em contato em breve.\n\n⏰ Horário de atendimento: seg-sex, 9h às 18h.");
+      await enviarWhatsApp(de,
+        "👤 Um recrutador entrará em contato em breve.\n\n" +
+        "⏰ Horário de atendimento: seg-sex, 9h às 18h.\n\n" +
+        "Digite *menu* para voltar ao início."
+      );
 
     } else if (msg === "4") {
-      await enviarWhatsApp(de, "📄 Para enviar seu currículo, acesse o formulário de candidatura e preencha seus dados. Em breve enviaremos o link!");
+      await enviarWhatsApp(de,
+        "📄 Para enviar seu currículo acesse o formulário abaixo e preencha seus dados:\n\n" +
+        "🔗 https://docs.google.com/forms/d/e/1FAIpQLScxeXcoSiFIQWvyFmt4FJhuQDyKev_9Gca7NZnbM5fKyLw3hA/viewform\n\n" +
+        "Em breve nossa equipe entrará em contato! 😊"
+      );
 
     } else {
-      await enviarWhatsApp(de, "Não entendi sua mensagem. 😊\n\nDigite *menu* para ver as opções disponíveis.");
+      await enviarWhatsApp(de,
+        "Não entendi sua mensagem. 😊\n\nDigite *menu* para ver as opções disponíveis."
+      );
     }
 
   } catch (err) {
