@@ -15,6 +15,7 @@ const EVOLUTION_API_KEY  = "CrmRh@2026";
 const SPREADSHEET_ID     = "1Z1HHv264Tvda117uPK-4flFwrg-_Kig4BG2I1qcst4w";
 const CREDENTIALS_PATH   = path.join(__dirname, "credentials.json");
 const WEB_APP_URL        = "https://script.google.com/macros/s/AKfycbw7W_41GqdyE_pd0x47fBDzE-34jmMRYfIcWxcSnWb6jXH1x_ayMLcXg-linOoBKiojIg/exec";
+const FORM_URL           = "https://docs.google.com/forms/d/e/1FAIpQLScxeXcoSiFIQWvyFmt4FJhuQDyKev_9Gca7NZnbM5fKyLw3hA/viewform?usp=pp_url&entry.1282499803=";
 
 // ============================================================
 //  📊  GOOGLE SHEETS — Autenticação
@@ -96,13 +97,13 @@ async function buscarFuncionario(telefone) {
     const telLimpo = String(telefone).replace(/\D/g, "");
 
     for (let i = 1; i < dados.length; i++) {
-      const telPlanilha = String(dados[i][4] || "").replace(/\D/g, "");
+      const telPlanilha = String(dados[i][4] || "").replace(/\D/g, "").replace(/^0/, "");
       if (telPlanilha && telLimpo.includes(telPlanilha.slice(-8))) {
         return {
-          encontrou:  true,
-          nome:       dados[i][1],
-          registro:   dados[i][0],
-          status:     dados[i][7]
+          encontrou: true,
+          nome:      dados[i][1],
+          registro:  dados[i][0],
+          status:    dados[i][7]
         };
       }
     }
@@ -177,7 +178,8 @@ app.post("/webhook", async (req, res) => {
         "2️⃣ Status da minha candidatura\n" +
         "3️⃣ Falar com um recrutador\n" +
         "4️⃣ Enviar currículo\n" +
-        "5️⃣ Acompanhar minhas indicações"
+        "5️⃣ Meu link de indicação\n" +
+        "6️⃣ Acompanhar minhas indicações"
       );
 
     } else if (msg === "1") {
@@ -198,18 +200,37 @@ app.post("/webhook", async (req, res) => {
     } else if (msg === "4") {
       await enviarWhatsApp(de,
         "📄 Para enviar seu currículo acesse o formulário abaixo:\n\n" +
-        "🔗 https://docs.google.com/forms/d/e/1FAIpQLScxeXcoSiFIQWvyFmt4FJhuQDyKev_9Gca7NZnbM5fKyLw3hA/viewform\n\n" +
+        "🔗 " + FORM_URL + "\n\n" +
         "Em breve nossa equipe entrará em contato! 😊"
       );
 
     } else if (msg === "5") {
-      // Busca funcionário pelo telefone
+      // Link de indicação personalizado com ID do funcionário
       const func = await buscarFuncionario(de);
       if (func.encontrou && func.status === "Ativo") {
-        const link = `${WEB_APP_URL}?id=${func.registro}`;
+        const linkIndicacao = FORM_URL + func.registro;
         await enviarWhatsApp(de,
-          `🔗 Olá, *${func.nome}*! Acesse suas indicações pelo link:\n\n${link}\n\n` +
-          `Você pode salvar este link para acompanhar a qualquer momento! 😊`
+          `🔗 Olá, *${func.nome}*! Este é seu link de indicação:\n\n` +
+          `${linkIndicacao}\n\n` +
+          `Compartilhe com amigos que deseja indicar para nossas vagas. ` +
+          `Quando eles preencherem o formulário, a indicação será registrada automaticamente no seu nome! 🎉`
+        );
+      } else {
+        await enviarWhatsApp(de,
+          "Não encontramos seu cadastro como funcionário ativo.\n\n" +
+          "Se você é funcionário, entre em contato com o RH para cadastrar seu número. 😊"
+        );
+      }
+
+    } else if (msg === "6") {
+      // Página de acompanhamento de indicações
+      const func = await buscarFuncionario(de);
+      if (func.encontrou && func.status === "Ativo") {
+        const linkAcomp = `${WEB_APP_URL}?id=${func.registro}`;
+        await enviarWhatsApp(de,
+          `📊 Olá, *${func.nome}*! Acompanhe suas indicações pelo link:\n\n` +
+          `${linkAcomp}\n\n` +
+          `Você pode salvar este link para consultar a qualquer momento! 😊`
         );
       } else {
         await enviarWhatsApp(de,
