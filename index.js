@@ -1,7 +1,6 @@
-const express   = require("express");
-const axios     = require("axios");
-const translate = require("@vitalets/google-translate-api").translate;
-const app       = express();
+const express = require("express");
+const axios   = require("axios");
+const app     = express();
 app.use(express.json());
 
 // ============================================================
@@ -20,10 +19,15 @@ async function traduzir(texto, idioma) {
   if (!texto || idioma === "PT") return texto;
   try {
     const lang = LANG_MAP[idioma] || "pt";
-    const result = await translate(texto, { from: "pt", to: lang });
-    return result.text || texto;
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=${lang}&dt=t&q=${encodeURIComponent(texto)}`;
+    const r = await axios.get(url, { timeout: 8000, headers: { "User-Agent": "Mozilla/5.0" } });
+    let resultado = "";
+    if (r.data && r.data[0]) {
+      r.data[0].forEach(part => { if (part && part[0]) resultado += part[0]; });
+    }
+    return resultado || texto;
   } catch (e) {
-    console.error("Erro tradução:", e.message);
+    console.error("Erro traducao:", e.message);
     return texto;
   }
 }
@@ -268,9 +272,17 @@ async function processarMensagem(de, msg) {
         await enviarWhatsApp(de, await listarVagas(lang));
       } else if (msg === "2") {
         const cand = estado.dados;
-        await enviarWhatsApp(de,
-          `📋 Olá, *${cand.nome}*!\n\n▪️ Vaga: *${cand.vaga}*\n▪️ Etapa: *${cand.etapa}*\n▪️ Status: *${cand.status}*\n\nDúvidas? Digite *4* para falar com um recrutador.`
-        );
+        const vagaTrad  = await traduzir(cand.vaga,  lang);
+        const etapaTrad = await traduzir(cand.etapa, lang);
+        const statusTrad= await traduzir(cand.status,lang);
+        const statusLabels = {
+          PT: `📋 Olá, *${cand.nome}*!\n\n▪️ Vaga: *${vagaTrad}*\n▪️ Etapa: *${etapaTrad}*\n▪️ Status: *${statusTrad}*\n\nDúvidas? Digite *4* para falar com um recrutador.`,
+          JP: `📋 こんにちは、*${cand.nome}*さん！\n\n▪️ 求人: *${vagaTrad}*\n▪️ 選考段階: *${etapaTrad}*\n▪️ 状況: *${statusTrad}*\n\nご質問は *4* を入力してください。`,
+          EN: `📋 Hello, *${cand.nome}*!\n\n▪️ Position: *${vagaTrad}*\n▪️ Stage: *${etapaTrad}*\n▪️ Status: *${statusTrad}*\n\nQuestions? Type *4* to talk to a recruiter.`,
+          PH: `📋 Kumusta, *${cand.nome}*!\n\n▪️ Posisyon: *${vagaTrad}*\n▪️ Yugto: *${etapaTrad}*\n▪️ Status: *${statusTrad}*\n\nMga katanungan? I-type ang *4*.`,
+          ES: `📋 Hola, *${cand.nome}*!\n\n▪️ Puesto: *${vagaTrad}*\n▪️ Etapa: *${etapaTrad}*\n▪️ Estado: *${statusTrad}*\n\n¿Preguntas? Escribe *4* para hablar con un reclutador.`
+        };
+        await enviarWhatsApp(de, statusLabels[lang] || statusLabels["PT"]);
       } else if (msg === "3") {
         setEstado(de, { etapa: "recuperar_link" });
         await enviarWhatsApp(de, t("recuperar_link_instrucao", lang));
