@@ -172,22 +172,36 @@ async function identificarUsuario(telefone) {
 // ============================================================
 //  📋  LISTAR VAGAS
 // ============================================================
-async function listarVagas() {
+async function listarVagas(idioma) {
+  idioma = idioma || "PT";
   try {
-    const r = await axios.get(`${APPS_SCRIPT_URL}?aba=Vagas&status=Aberta`, { timeout: 10000 });
+    const r = await axios.get(`${APPS_SCRIPT_URL}?aba=Vagas&status=Aberta&idioma=${idioma}`, { timeout: 15000 });
     if (r.data && r.data.vagas && r.data.vagas.length > 0) {
-      let lista = "📢 *Vagas Abertas:*\n\n";
+      const labels = {
+        PT: { titulo: "📢 *Vagas Abertas:*",      rodape: "\nCompartilhe o link de indicação!",    vazio: "Não há vagas abertas no momento." },
+        JP: { titulo: "📢 *求人情報:*",            rodape: "\n紹介リンクをシェアしてください！",      vazio: "現在、募集中の求人はありません。" },
+        EN: { titulo: "📢 *Open Positions:*",      rodape: "\nShare your referral link!",            vazio: "There are no open positions at the moment." },
+        PH: { titulo: "📢 *Bukas na Posisyon:*",   rodape: "\nI-share ang iyong referral link!",     vazio: "Walang bukas na posisyon sa ngayon." },
+        ES: { titulo: "📢 *Puestos Disponibles:*", rodape: "\n¡Comparte tu enlace de referido!",     vazio: "No hay puestos disponibles en este momento." }
+      };
+      const lb = labels[idioma] || labels["PT"];
+      let lista = lb.titulo + "\n\n";
       r.data.vagas.forEach(v => {
         lista += `▪️ *${v.titulo}*`;
         if (v.provincia) lista += ` — ${v.provincia}`;
         if (v.cidade)    lista += `/${v.cidade}`;
         if (v.salario)   lista += ` | ¥${v.salario}`;
-        lista += "\n";
+        if (v.descricao) lista += `\n${v.descricao}`;
+        lista += "\n\n";
       });
-      return lista;
+      return lista + lb.rodape;
     }
-    return "Não há vagas abertas no momento.";
-  } catch (e) { return "Não foi possível carregar as vagas agora. Tente novamente."; }
+    const lb2 = { PT: "Não há vagas abertas.", JP: "求人はありません。", EN: "No open positions.", PH: "Walang bukas na posisyon.", ES: "No hay puestos disponibles." };
+    return lb2[idioma] || lb2["PT"];
+  } catch (e) {
+    console.error("Erro listarVagas:", e.message);
+    return "Não foi possível carregar as vagas agora. Tente novamente.";
+  }
 }
 
 // ============================================================
@@ -233,7 +247,7 @@ async function processarMensagem(de, msg) {
     // === MENU CANDIDATO ===
     if (estado.tipo === "candidato") {
       if (msg === "1") {
-        await enviarWhatsApp(de, await listarVagas());
+        await enviarWhatsApp(de, await listarVagas(lang));
       } else if (msg === "2") {
         const cand = estado.dados;
         await enviarWhatsApp(de,
@@ -253,7 +267,7 @@ async function processarMensagem(de, msg) {
     // === MENU FUNCIONÁRIO ===
     if (estado.tipo === "funcionario") {
       if (msg === "1") {
-        await enviarWhatsApp(de, await listarVagas());
+        await enviarWhatsApp(de, await listarVagas(lang));
       } else if (msg === "2") {
         const reg  = estado.dados.registro || "";
         const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${reg}`;
@@ -275,7 +289,7 @@ async function processarMensagem(de, msg) {
 
     // === MENU NOVO CONTATO ===
     if (msg === "1") {
-      await enviarWhatsApp(de, await listarVagas());
+      await enviarWhatsApp(de, await listarVagas(lang));
     } else if (msg === "2") {
       setEstado(de, { etapa: "pergunta_indicacao" });
       await enviarWhatsApp(de, t("pergunta_foi_indicado", lang));
