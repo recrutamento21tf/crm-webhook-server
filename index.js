@@ -1,6 +1,7 @@
-const express = require("express");
-const axios   = require("axios");
-const app     = express();
+const express   = require("express");
+const axios     = require("axios");
+const translate = require("@vitalets/google-translate-api").translate;
+const app       = express();
 app.use(express.json());
 
 // ============================================================
@@ -12,6 +13,20 @@ const EVOLUTION_API_KEY  = "CrmRh@2026";
 const SPREADSHEET_ID     = "1Z1HHv264Tvda117uPK-4flFwrg-_Kig4BG2I1qcst4w";
 const GOOGLE_API_KEY     = process.env.GOOGLE_API_KEY || "";
 const FORM_LINK          = "https://docs.google.com/forms/d/e/1FAIpQLSdabmBBvwTTdYJxgmjdtX1xCAhENCnppwukk8rrQIw_0reBnA/viewform";
+
+const LANG_MAP = { PT: "pt", JP: "ja", EN: "en", PH: "tl", ES: "es" };
+
+async function traduzir(texto, idioma) {
+  if (!texto || idioma === "PT") return texto;
+  try {
+    const lang = LANG_MAP[idioma] || "pt";
+    const result = await translate(texto, { from: "pt", to: lang });
+    return result.text || texto;
+  } catch (e) {
+    console.error("Erro tradução:", e.message);
+    return texto;
+  }
+}
 const APPS_SCRIPT_URL    = "https://script.google.com/macros/s/AKfycbw7W_41GqdyE_pd0x47fBDzE-34jmMRYfIcWxcSnWb6jXH1x_ayMLcXg-linOoBKiojIg/exec";
 
 // ============================================================
@@ -178,22 +193,25 @@ async function listarVagas(idioma) {
     const r = await axios.get(`${APPS_SCRIPT_URL}?aba=Vagas&status=Aberta&idioma=${idioma}`, { timeout: 15000 });
     if (r.data && r.data.vagas && r.data.vagas.length > 0) {
       const labels = {
-        PT: { titulo: "📢 *Vagas Abertas:*",      rodape: "\nCompartilhe o link de indicação!",    vazio: "Não há vagas abertas no momento." },
-        JP: { titulo: "📢 *求人情報:*",            rodape: "\n紹介リンクをシェアしてください！",      vazio: "現在、募集中の求人はありません。" },
-        EN: { titulo: "📢 *Open Positions:*",      rodape: "\nShare your referral link!",            vazio: "There are no open positions at the moment." },
-        PH: { titulo: "📢 *Bukas na Posisyon:*",   rodape: "\nI-share ang iyong referral link!",     vazio: "Walang bukas na posisyon sa ngayon." },
-        ES: { titulo: "📢 *Puestos Disponibles:*", rodape: "\n¡Comparte tu enlace de referido!",     vazio: "No hay puestos disponibles en este momento." }
+        PT: { titulo: "📢 *Vagas Abertas:*",       rodape: "\nCompartilhe o link de indicação!",  vazio: "Não há vagas abertas no momento." },
+        JP: { titulo: "📢 *求人情報:*",             rodape: "\n紹介リンクをシェアしてください！",    vazio: "現在、募集中の求人はありません。" },
+        EN: { titulo: "📢 *Open Positions:*",       rodape: "\nShare your referral link!",          vazio: "There are no open positions at the moment." },
+        PH: { titulo: "📢 *Bukas na Posisyon:*",    rodape: "\nI-share ang iyong referral link!",   vazio: "Walang bukas na posisyon sa ngayon." },
+        ES: { titulo: "📢 *Puestos Disponibles:*",  rodape: "\n¡Comparte tu enlace de referido!",   vazio: "No hay puestos disponibles en este momento." }
       };
       const lb = labels[idioma] || labels["PT"];
       let lista = lb.titulo + "\n\n";
-      r.data.vagas.forEach(v => {
-        lista += `▪️ *${v.titulo}*`;
+      // Traduz cada vaga
+      for (const v of r.data.vagas) {
+        const titulo = await traduzir(v.titulo, idioma);
+        const desc   = v.descricao ? await traduzir(v.descricao, idioma) : "";
+        lista += `▪️ *${titulo}*`;
         if (v.provincia) lista += ` — ${v.provincia}`;
         if (v.cidade)    lista += `/${v.cidade}`;
         if (v.salario)   lista += ` | ¥${v.salario}`;
-        if (v.descricao) lista += `\n${v.descricao}`;
+        if (desc)        lista += `\n${desc}`;
         lista += "\n\n";
-      });
+      }
       return lista + lb.rodape;
     }
     const lb2 = { PT: "Não há vagas abertas.", JP: "求人はありません。", EN: "No open positions.", PH: "Walang bukas na posisyon.", ES: "No hay puestos disponibles." };
