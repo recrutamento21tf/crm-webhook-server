@@ -128,12 +128,22 @@ function t(chave, idioma) {
 // ============================================================
 async function enviarWhatsApp(numero, mensagem) {
   try {
-    await axios.post(
+    // Remove tudo que nao e digito, remove 81 do inicio se ja tiver, remove zero inicial
+    var num = String(numero).replace(/\D/g,"");
+    if (num.startsWith("81")) num = num.substring(2);
+    if (num.startsWith("0"))  num = num.substring(1);
+    var numFinal = "81" + num;
+    console.log("Enviando para:", numFinal);
+    const r = await axios.post(
       `${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE}`,
-      { number: "81" + numero.replace(/\D/g,"").replace(/^0/,""), text: mensagem },
+      { number: numFinal, text: mensagem },
       { headers: { apikey: EVOLUTION_API_KEY } }
     );
-  } catch (e) { console.error("Erro WhatsApp:", e.message); }
+    console.log("WhatsApp enviado! Status:", r.status);
+  } catch (e) {
+    console.error("Erro WhatsApp:", e.message);
+    if (e.response) console.error("Response:", JSON.stringify(e.response.data));
+  }
 }
 
 // ============================================================
