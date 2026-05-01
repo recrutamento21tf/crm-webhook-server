@@ -33,6 +33,10 @@ async function traduzir(texto, idioma) {
 }
 const APPS_SCRIPT_URL    = "https://script.google.com/macros/s/AKfycbw7W_41GqdyE_pd0x47fBDzE-34jmMRYfIcWxcSnWb6jXH1x_ayMLcXg-linOoBKiojIg/exec";
 
+// LINE Credentials
+const LINE_CHANNEL_SECRET       = "3081e85245cf79b12671c4a6625cd140";
+const LINE_CHANNEL_ACCESS_TOKEN = "bmiUOeJUYU6ytQiZ262Rq1OS7bU9W23DcuiDB4+/uU4RfRxmZI639S8P51qjsS4/y40t6grb8D/RLXiaH/A7qaSUfHd1eF+t0uS7d2HWyNEsgeRZL9f6ViCMHRdYlrHF5Aek2Ip/+Wj1euGTXGKPbQdB04t89/1O/w1cDnyilFU=";
+
 // ============================================================
 //  💾  ESTADO DA CONVERSA (em memória)
 //  Guarda: idioma, etapa do fluxo, dados temporários
@@ -379,7 +383,139 @@ async function processarMensagem(de, msg) {
 }
 
 // ============================================================
-//  🌐  WEBHOOK
+//  🟢  LINE — Enviar mensagem
+// ============================================================
+async function enviarLINE(userId, mensagem) {
+  try {
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      { to: userId, messages: [{ type: "text", text: mensagem }] },
+      { headers: { "Authorization": "Bearer " + LINE_CHANNEL_ACCESS_TOKEN, "Content-Type": "application/json" } }
+    );
+    console.log("LINE enviado para:", userId);
+  } catch (e) {
+    console.error("Erro LINE:", e.message);
+    if (e.response) console.error("Response:", JSON.stringify(e.response.data));
+  }
+}
+
+// ============================================================
+//  🟢  WEBHOOK LINE
+// ============================================================
+app.post("/webhook-line", async (req, res) => {
+  res.status(200).send("ok"); // responde 200 imediatamente
+  try {
+    const events = req.body.events || [];
+    for (const event of events) {
+      if (event.type !== "message" || event.message.type !== "text") continue;
+      const userId = event.source.userId;
+      const msg    = event.message.text.trim();
+      await processarMensagemLINE(userId, msg);
+    }
+  } catch (e) { console.error("Erro webhook LINE:", e.message); }
+});
+
+async function processarMensagemLINE(userId, msg) {
+  const estado  = getEstado("line_" + userId);
+  const lang    = estado.idioma || "PT";
+  const msgLower = msg.toLowerCase().trim();
+
+  // Comandos globais
+  if (["oi","olá","ola","menu","hello","hola","こんにちは","kumusta"].includes(msgLower) || msg === "0") {
+    resetEstado("line_" + userId);
+    await enviarLINE(userId, T.escolha_idioma["PT"]);
+    setEstado("line_" + userId, { etapa: "escolha_idioma" });
+    return;
+  }
+
+  // Escolha de idioma
+  if (estado.etapa === "escolha_idioma" || estado.etapa === "inicio") {
+    const mapIdioma = { "1": "PT", "2": "JP", "3": "EN", "4": "PH", "5": "ES" };
+    if (mapIdioma[msg]) {
+      const idioma  = mapIdioma[msg];
+      setEstado("line_" + userId, { idioma: idioma, etapa: "menu" });
+      const usuario = await identificarUsuarioLINE(userId);
+      setEstado("line_" + userId, { tipo: usuario.tipo, dados: usuario.dados });
+      const menuKey = usuario.tipo === "candidato" ? "menu_candidato" :
+                      usuario.tipo === "funcionario" ? "menu_funcionario" : "menu_novo";
+      await enviarLINE(userId, t(menuKey, idioma));
+      return;
+    }
+    await enviarLINE(userId, T.escolha_idioma["PT"]);
+    return;
+  }
+
+  // Menu principal
+  if (estado.etapa === "menu") {
+    if (estado.tipo === "candidato") {
+      if (msg === "1") { await enviarLINE(userId, await listarVagas(lang)); }
+      else if (msg === "2") {
+        const cand = estado.dados;
+        const vagaTrad  = await traduzir(cand.vaga,  lang);
+        const etapaTrad = await traduzir(cand.etapa, lang);
+        const statusTrad= await traduzir(cand.status,lang);
+        await enviarLINE(userId, `📋 ${cand.nome}
+
+▪️ ${vagaTrad}
+▪️ ${etapaTrad}
+▪️ ${statusTrad}`);
+      }
+      else if (msg === "3") { setEstado("line_" + userId, { etapa: "recuperar_link" }); await enviarLINE(userId, t("recuperar_link_instrucao", lang)); }
+      else if (msg === "4") { await enviarLINE(userId, t("falar_rh", lang)); }
+      else { await enviarLINE(userId, t("menu_candidato", lang)); }
+      return;
+    }
+    if (estado.tipo === "funcionario") {
+      if (msg === "1") { await enviarLINE(userId, await listarVagas(lang)); }
+      else if (msg === "2") {
+        const reg  = estado.dados.registro || "";
+        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${reg}`;
+        await enviarLINE(userId, `🔗 ${estado.dados.nome}
+
+${link}`);
+      }
+      else if (msg === "3") {
+        const webUrl = `${APPS_SCRIPT_URL}?id=${estado.dados.registro}`;
+        await enviarLINE(userId, `📊 ${webUrl}`);
+      }
+      else if (msg === "4") { await enviarLINE(userId, t("falar_rh", lang)); }
+      else { await enviarLINE(userId, t("menu_funcionario", lang)); }
+      return;
+    }
+    if (msg === "1") { await enviarLINE(userId, await listarVagas(lang)); }
+    else if (msg === "2") { setEstado("line_" + userId, { etapa: "pergunta_indicacao" }); await enviarLINE(userId, t("pergunta_foi_indicado", lang)); }
+    else if (msg === "3") { await enviarLINE(userId, t("falar_rh", lang)); }
+    else { await enviarLINE(userId, t("menu_novo", lang)); }
+    return;
+  }
+
+  if (estado.etapa === "pergunta_indicacao" || estado.etapa === "recuperar_link") {
+    if (["não","nao","no","hindi"].includes(msgLower)) {
+      await enviarLINE(userId, t("link_sem_id", lang).replace("{link}", FORM_LINK));
+      setEstado("line_" + userId, { etapa: "menu" });
+    } else {
+      const func = await buscarDadosPlanilha("Funcionarios", "registro", msg.trim().toUpperCase());
+      if (func && func.encontrado) {
+        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${msg.trim().toUpperCase()}`;
+        await enviarLINE(userId, t("link_com_id", lang).replace("{link}", link));
+        setEstado("line_" + userId, { etapa: "menu" });
+      } else {
+        await enviarLINE(userId, t("id_invalido", lang));
+      }
+    }
+    return;
+  }
+
+  await enviarLINE(userId, t("nao_reconhecido", lang));
+}
+
+async function identificarUsuarioLINE(userId) {
+  // Por enquanto retorna novo — futuramente buscar LINE ID na planilha
+  return { tipo: "novo", dados: {} };
+}
+
+// ============================================================
+//  🌐  WEBHOOK WHATSAPP
 // ============================================================
 app.post("/webhook", async (req, res) => {
   try {
