@@ -441,37 +441,13 @@ async function processarMensagemLINE(userId, msg) {
         await enviarLINE(userId, t(menuKey, idioma));
       } else {
         setEstado("line_" + userId, { idioma: idioma, etapa: "identificacao" });
+        const n = "\n";
         const msgId = {
-          PT: "Para identificar você, escolha:
-
-1️⃣ Meu número de telefone
-2️⃣ Meu e-mail cadastrado
-
-Sou novo — envie *novo*",
-          JP: "確認のため選択してください:
-
-1️⃣ 電話番号
-2️⃣ メールアドレス
-
-新規の方は *novo* と入力",
-          EN: "To identify you, choose:
-
-1️⃣ My phone number
-2️⃣ My registered email
-
-New? Type *novo*",
-          PH: "Para makilala ka, pumili:
-
-1️⃣ Aking numero ng telepono
-2️⃣ Aking email
-
-Bago? I-type ang *novo*",
-          ES: "Para identificarte, elige:
-
-1️⃣ Mi número de teléfono
-2️⃣ Mi correo electrónico
-
-¿Nuevo? Escribe *novo*"
+          PT: "Para identificar voce, escolha:" + n + n + "1 - Meu numero de telefone" + n + "2 - Meu e-mail cadastrado" + n + n + "Sou novo - envie: novo",
+          JP: "\u78ba\u8a8dのため選択してください:" + n + n + "1 - 電話番号" + n + "2 - メールアドレス" + n + n + "新規の方は novo と入力",
+          EN: "To identify you, choose:" + n + n + "1 - My phone number" + n + "2 - My registered email" + n + n + "New? Type: novo",
+          PH: "Para makilala ka, pumili:" + n + n + "1 - Aking numero ng telepono" + n + "2 - Aking email" + n + n + "Bago? I-type ang: novo",
+          ES: "Para identificarte, elige:" + n + n + "1 - Mi numero de telefono" + n + "2 - Mi correo electronico" + n + n + "Nuevo? Escribe: novo"
         };
         await enviarLINE(userId, msgId[idioma] || msgId["PT"]);
       }
@@ -509,15 +485,11 @@ Bago? I-type ang *novo*",
     if (cand && cand.encontrado) {
       await salvarLineUserId(userId, "candidato", cand.id);
       setEstado("line_" + userId, { etapa: "menu", tipo: "candidato", dados: cand });
-      await enviarLINE(userId, "✅ " + cand.nome + "!
-
-" + t("menu_candidato", lang));
+      await enviarLINE(userId, "✅ " + cand.nome + "!\n\n" + t("menu_candidato", lang));
     } else if (func && func.encontrado) {
       await salvarLineUserId(userId, "funcionario", func.registro);
       setEstado("line_" + userId, { etapa: "menu", tipo: "funcionario", dados: func });
-      await enviarLINE(userId, "✅ " + func.nome + "!
-
-" + t("menu_funcionario", lang));
+      await enviarLINE(userId, "✅ " + func.nome + "!\n\n" + t("menu_funcionario", lang));
     } else {
       const msgNot = { PT: "❌ Número não encontrado. Tente novamente ou envie *novo*:", JP: "❌ 番号が見つかりません。再試行するか *novo* と入力:", EN: "❌ Number not found. Try again or type *novo*:", PH: "❌ Hindi nahanap ang numero. Subukan muli o i-type ang *novo*:", ES: "❌ Número no encontrado. Intenta de nuevo o escribe *novo*:" };
       await enviarLINE(userId, msgNot[lang] || msgNot["PT"]);
@@ -533,15 +505,11 @@ Bago? I-type ang *novo*",
     if (cand && cand.encontrado) {
       await salvarLineUserId(userId, "candidato", cand.id);
       setEstado("line_" + userId, { etapa: "menu", tipo: "candidato", dados: cand });
-      await enviarLINE(userId, "✅ " + cand.nome + "!
-
-" + t("menu_candidato", lang));
+      await enviarLINE(userId, "✅ " + cand.nome + "!\n\n" + t("menu_candidato", lang));
     } else if (func && func.encontrado) {
       await salvarLineUserId(userId, "funcionario", func.registro);
       setEstado("line_" + userId, { etapa: "menu", tipo: "funcionario", dados: func });
-      await enviarLINE(userId, "✅ " + func.nome + "!
-
-" + t("menu_funcionario", lang));
+      await enviarLINE(userId, "✅ " + func.nome + "!\n\n" + t("menu_funcionario", lang));
     } else {
       const msgNot = { PT: "❌ E-mail não encontrado. Tente novamente ou envie *novo*:", JP: "❌ メールが見つかりません。再試行するか *novo* と入力:", EN: "❌ Email not found. Try again or type *novo*:", PH: "❌ Hindi nahanap ang email. Subukan muli o i-type ang *novo*:", ES: "❌ Email no encontrado. Intenta de nuevo o escribe *novo*:" };
       await enviarLINE(userId, msgNot[lang] || msgNot["PT"]);
