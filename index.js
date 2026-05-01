@@ -1,4 +1,4 @@
- const express = require("express");
+const express = require("express");
 const axios   = require("axios");
 const app     = express();
 app.use(express.json());
@@ -71,7 +71,7 @@ const T = {
   },
   menu_candidato: {
     PT: "📋 *Menu — Candidato*\n\n1️⃣ Ver vagas abertas\n2️⃣ Status da minha candidatura\n3️⃣ Recuperar link de indicação\n4️⃣ Falar com recrutador\n\n0️⃣ Mudar idioma",
-    JP: "📋 *メニュー — 応募者*\n\n1️⃣ 求人を見る\n2️⃣ 応募状況を確認\n3️⃣ 紹介リンクを再取得\n4️⃣ 担当者に話す\n\n0️⃣ 言語を変更",
+    JP: "📋 *メニュー — 応募者*\n\n1️⃣ 求人を見る\n2️⃣ 応募状況を確認\n3️⃣ 紹介リンクを再取得\n4️⃣ 担当者と話す\n\n0️⃣ 言語を変更",
     EN: "📋 *Menu — Candidate*\n\n1️⃣ See open positions\n2️⃣ Check my application status\n3️⃣ Recover referral link\n4️⃣ Talk to a recruiter\n\n0️⃣ Change language",
     PH: "📋 *Menu — Kandidato*\n\n1️⃣ Tingnan ang mga bukas na posisyon\n2️⃣ Suriin ang aking aplikasyon\n3️⃣ Kunin muli ang referral link\n4️⃣ Makipag-usap sa recruiter\n\n0️⃣ Baguhin ang wika",
     ES: "📋 *Menú — Candidato*\n\n1️⃣ Ver puestos disponibles\n2️⃣ Estado de mi solicitud\n3️⃣ Recuperar enlace de referido\n4️⃣ Hablar con un reclutador\n\n0️⃣ Cambiar idioma",
