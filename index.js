@@ -1,4 +1,4 @@
-const express = require("express");
+ const express = require("express");
 const axios   = require("axios");
 const app     = express();
 app.use(express.json());
@@ -613,8 +613,16 @@ app.post("/webhook", async (req, res) => {
   res.send("ok");
 });
 
-app.get("/",  (req, res) => res.send("CRM Bot Online! 🚀"));
+const path = require("path");
+const fs   = require("fs");
+
+app.get("/",       (req, res) => res.send("CRM Bot Online! 🚀"));
 app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date() }));
+app.get("/painel", (req, res) => {
+  const file = path.join(__dirname, "painel.html");
+  if (fs.existsSync(file)) res.sendFile(file);
+  else res.send("Painel não encontrado. Adicione painel.html ao repositório.");
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
