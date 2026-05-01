@@ -561,6 +561,14 @@ ${link}`);
     return;
   }
 
+  // Resposta de pesquisa de satisfacao
+  if (["1","2","3","4"].indexOf(msg.trim()) !== -1 && estado.tipo === "candidato") {
+    try {
+      const r = await axios.get(`${APPS_SCRIPT_URL}?acao=respostaPesquisa&telefone=${encodeURIComponent(de)}&resposta=${msg.trim()}`, { timeout: 15000 });
+      if (r.data && r.data.ok) return; // processado pela pesquisa
+    } catch(e) { /* nao era pesquisa, continua */ }
+  }
+
   // Confirmacao de cancelamento de candidatura
   if (estado.etapa === "confirmar_cancelamento") {
     const msgNorm = msg.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
