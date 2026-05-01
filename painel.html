@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Recrutamento — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D1117;
+    --bg2: #161B22;
+    --bg3: #21262D;
+    --border: #30363D;
+    --text: #E6EDF3;
+    --text2: #8B949E;
+    --blue: #2F81F7;
+    --blue-dim: #1C3A5E;
+    --green: #3FB950;
+    --green-dim: #1A3A22;
+    --orange: #F78166;
+    --orange-dim: #3D1F1A;
+    --purple: #BC8CFF;
+    --purple-dim: #2D1F4E;
+    --yellow: #F0C000;
+    --yellow-dim: #3D3000;
+    --red: #F85149;
+    --red-dim: #3D1A1A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* LOGIN */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 0%, #1C3A5E 0%, #0D1117 60%);
+  }
+
+  .login-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .login-logo {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .login-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .login-sub {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  .login-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .login-input:focus { border-color: var(--blue); }
+
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--blue);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: opacity 0.2s;
+  }
+
+  .login-btn:hover { opacity: 0.85; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
+
+  /* MAIN */
+  #main { display: none; }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-logo { font-size: 24px; }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .header-sub { font-size: 12px; color: var(--text2); }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  .btn-refresh {
+    padding: 8px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .btn-refresh:hover { border-color: var(--blue); color: var(--blue); }
+
+  .btn-logout {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* NAV */
+  .nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-btn {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* CONTENT */
+  .content { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* TAB PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--blue); }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.orange::before { background: var(--orange); }
+  .stat-card.purple::before { background: var(--purple); }
+  .stat-card.yellow::before { background: var(--yellow); }
+  .stat-card.red::before { background: var(--red); }
+
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 700; font-family: 'DM Mono', monospace; }
+  .stat-icon { position: absolute; right: 16px; top: 16px; font-size: 20px; opacity: 0.4; }
+
+  /* SECTION */
+  .section { margin-bottom: 32px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 16px; font-weight: 600; }
+
+  /* GRID 2 COL */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* CARD */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-body { padding: 20px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 12px; text-align: left; background: var(--bg3); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-blue   { background: var(--blue-dim);   color: var(--blue);   }
+  .badge-green  { background: var(--green-dim);  color: var(--green);  }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+  .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .badge-red    { background: var(--red-dim);    color: var(--red);    }
+  .badge-gray   { background: var(--bg3);        color: var(--text2);  }
+
+  /* FUNIL */
+  .funil { display: flex; flex-direction: column; gap: 8px; }
+
+  .funil-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .funil-label { width: 150px; font-size: 13px; color: var(--text2); flex-shrink: 0; }
+  .funil-bar-wrap { flex: 1; height: 24px; background: var(--bg3); border-radius: 6px; overflow: hidden; }
+  .funil-bar { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
+  .funil-count { width: 40px; text-align: right; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 600; }
+
+  /* RANKING */
+  .ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ranking-item:last-child { border-bottom: none; }
+  .ranking-pos { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .pos-1 { background: #F0C000; color: #000; }
+  .pos-2 { background: #B0B8C1; color: #000; }
+  .pos-3 { background: #C8A06A; color: #000; }
+  .pos-other { background: var(--bg3); color: var(--text2); }
+  .ranking-name { flex: 1; font-weight: 500; }
+  .ranking-dept { font-size: 12px; color: var(--text2); }
+  .ranking-num { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 700; color: var(--purple); }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 40px; color: var(--text2); }
+  .spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* IDIOMA BARS */
+  .idioma-bars { display: flex; flex-direction: column; gap: 10px; }
+  .idioma-item { display: flex; align-items: center; gap: 12px; }
+  .idioma-flag { font-size: 20px; width: 28px; flex-shrink: 0; }
+  .idioma-name { width: 100px; font-size: 13px; }
+  .idioma-bar-wrap { flex: 1; height: 16px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .idioma-bar { height: 100%; border-radius: 4px; }
+  .idioma-count { width: 40px; text-align: right; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; }
+
+  /* INPUT SEARCH */
+  .search-input {
+    padding: 8px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    width: 240px;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--blue); }
+
+  /* SELECT */
+  .filter-select {
+    padding: 8px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+  }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  /* UPDATE TIME */
+  .update-time { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">👥</div>
+    <div class="login-title">CRM Recrutamento</div>
+    <div class="login-sub">Painel de Gestão — RH</div>
+    <input type="password" class="login-input" id="login-senha" placeholder="Digite a senha..." onkeydown="if(event.key==='Enter')fazerLogin()">
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+    <div class="login-error" id="login-error">❌ Senha incorreta</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">📊</div>
+      <div>
+        <div class="header-title">CRM Recrutamento & Seleção</div>
+        <div class="header-sub">Painel de Gestão — RH</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="update-time" id="update-time"></span>
+      <button class="btn-refresh" onclick="carregarDados()">🔄 Atualizar</button>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="mudarTab('dashboard',this)">📊 Dashboard</button>
+    <button class="nav-btn" onclick="mudarTab('candidatos',this)">👥 Candidatos</button>
+    <button class="nav-btn" onclick="mudarTab('vagas',this)">💼 Vagas</button>
+    <button class="nav-btn" onclick="mudarTab('funcionarios',this)">🏢 Funcionários</button>
+    <button class="nav-btn" onclick="mudarTab('bonus',this)">💰 Bônus</button>
+    <button class="nav-btn" onclick="mudarTab('referral',this)">🏆 Referral</button>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-panel active">
+      <div class="stats-grid" id="stats-grid">
+        <div class="loading"><div class="spinner"></div><br>Carregando...</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">📈 Funil de Seleção</div>
+          <div class="card-body">
+            <div class="funil" id="funil-chart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">🌐 Candidatos por Idioma</div>
+          <div class="card-body">
+            <div class="idioma-bars" id="idioma-bars"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">🏆 Ranking de Indicações</div>
+          <div class="card-body">
+            <div id="ranking-list"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">💰 Status de Bônus</div>
+          <div class="card-body">
+            <div id="bonus-summary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANDIDATOS -->
+    <div id="tab-candidatos" class="tab-panel">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">👥 Todos os Candidatos</div>
+        </div>
+        <div class="filters">
+          <input type="text" class="search-input" placeholder="🔍 Buscar por nome..." oninput="filtrarCandidatos(this.value)">
+          <select class="filter-select" onchange="filtrarCandidatosPorEtapa(this.value)">
+            <option value="">Todas as etapas</option>
+            <option>Triagem</option>
+            <option>Entrevista RH</option>
+            <option>Entrevista Fábrica</option>
+            <option>Proposta</option>
+            <option>Contratado</option>
+            <option>Reprovado</option>
+            <option>Desistiu</option>
+          </select>
+          <select class="filter-select" onchange="filtrarCandidatosPorIdioma(this.value)">
+            <option value="">Todos os idiomas</option>
+            <option>🇧🇷 Português</option>
+            <option>🇯🇵 日本語</option>
+            <option>🇺🇸 English</option>
+            <option>🇵🇭 Filipino</option>
+            <option>🇪🇸 Español</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table id="tabela-candidatos">
+              <thead><tr><th>ID</th><th>Nome</th><th>Vaga</th><th>Etapa</th><th>Status</th><th>Idioma</th><th>Província</th><th>Nível JP</th><th>Fonte</th><th>Data</th></tr></thead>
+              <tbody id="tbody-candidatos"><tr><td colspan="10" class="loading">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VAGAS -->
+    <div id="tab-vagas" class="tab-panel">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">💼 Vagas</div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table id="tabela-vagas">
+              <thead><tr><th>ID</th><th>Título</th><th>Depto</th><th>Status</th><th>Vagas</th><th>Inscritos</th><th>Responsável</th><th>Província</th><th>Cidade</th><th>Salário</th><th>Prazo</th></tr></thead>
+              <tbody id="tbody-vagas"><tr><td colspan="11" class="loading">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNCIONÁRIOS -->
+    <div id="tab-funcionarios" class="tab-panel">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🏢 Funcionários</div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Registro</th><th>Nome</th><th>Depto</th><th>Status</th><th>Idioma</th><th>Indicações</th><th>Contratados</th><th>Prêmio 1</th><th>Prêmio 2</th></tr></thead>
+              <tbody id="tbody-funcionarios"><tr><td colspan="9" class="loading">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BÔNUS -->
+    <div id="tab-bonus" class="tab-panel">
+      <div class="stats-grid" id="bonus-stats"></div>
+      <div class="section">
+        <div class="section-title" style="margin-bottom:16px">💰 Controle de Bônus — Candidatos</div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Nome</th><th>Vaga</th><th>Data Admissão</th><th>Prazo Bônus 1</th><th>Data Pgto B1</th><th>Status B1</th><th>Prazo Bônus 2</th><th>Data Pgto B2</th><th>Status B2</th></tr></thead>
+              <tbody id="tbody-bonus"><tr><td colspan="10" class="loading">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REFERRAL -->
+    <div id="tab-referral" class="tab-panel">
+      <div class="stats-grid" id="referral-stats"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">🏆 Ranking de Indicações</div>
+          <div class="card-body" id="ranking-full"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">📋 Histórico de Indicações</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Funcionário</th><th>Indicado</th><th>Vaga</th><th>Status</th><th>Prêmio</th><th>Data</th></tr></thead>
+              <tbody id="tbody-indicacoes"><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIG
+// ============================================================
+const SENHA  = "RH@2026";
+const API_URL = "https://script.google.com/macros/s/AKfycbw7W_41GqdyE_pd0x47fBDzE-34jmMRYfIcWxcSnWb6jXH1x_ayMLcXg-linOoBKiojIg/exec";
+
+let dadosGlobais = { candidatos: [], vagas: [], funcionarios: [], indicacoes: [] };
+let candidatosFiltrados = [];
+
+// ============================================================
+//  LOGIN
+// ============================================================
+function fazerLogin() {
+  const senha = document.getElementById("login-senha").value;
+  if (senha === SENHA) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("main").style.display = "block";
+    carregarDados();
+  } else {
+    document.getElementById("login-error").style.display = "block";
+  }
+}
+
+function logout() {
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("main").style.display = "none";
+  document.getElementById("login-senha").value = "";
+}
+
+// ============================================================
+//  NAVEGAÇÃO
+// ============================================================
+function mudarTab(tab, btn) {
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ============================================================
+//  CARREGAR DADOS
+// ============================================================
+async function carregarDados() {
+  document.getElementById("update-time").textContent = "Carregando...";
+  try {
+    const r = await fetch(API_URL + "?acao=dashboard");
+    const dados = await r.json();
+    dadosGlobais = dados;
+    candidatosFiltrados = dados.candidatos || [];
+    renderDashboard(dados);
+    renderCandidatos(candidatosFiltrados);
+    renderVagas(dados.vagas || []);
+    renderFuncionarios(dados.funcionarios || []);
+    renderBonus(dados.candidatos || []);
+    renderReferral(dados);
+    const agora = new Date();
+    document.getElementById("update-time").textContent =
+      "Atualizado: " + agora.toLocaleTimeString("pt-BR");
+  } catch (e) {
+    console.error("Erro:", e);
+    document.getElementById("update-time").textContent = "Erro ao carregar";
+  }
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard(dados) {
+  const cands  = dados.candidatos  || [];
+  const vagas  = dados.vagas       || [];
+  const funcs  = dados.funcionarios|| [];
+  const inds   = dados.indicacoes  || [];
+
+  const total       = cands.length;
+  const contratados = cands.filter(c => c.etapa === "Contratado").length;
+  const vagasAb     = vagas.filter(v => v.status === "Aberta").length;
+  const funcsAtivos = funcs.filter(f => f.status === "Ativo").length;
+  const totalInds   = inds.length;
+  const b1Lib       = cands.filter(c => c.statusB1 === "Liberado para pagamento").length;
+
+  const statsHtml = [
+    { label: "Total Candidatos", value: total,       icon: "👥", cls: "blue"   },
+    { label: "Contratados",       value: contratados, icon: "✅", cls: "green"  },
+    { label: "Vagas Abertas",     value: vagasAb,     icon: "💼", cls: "blue"   },
+    { label: "Funcionários Ativos",value: funcsAtivos,icon: "🏢", cls: "purple" },
+    { label: "Total Indicações",  value: totalInds,   icon: "🏆", cls: "yellow" },
+    { label: "Bônus Liberados",   value: b1Lib,       icon: "💰", cls: "orange" },
+  ].map(s => `
+    <div class="stat-card ${s.cls}">
+      <div class="stat-icon">${s.icon}</div>
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value">${s.value}</div>
+    </div>`).join("");
+
+  document.getElementById("stats-grid").innerHTML = statsHtml;
+
+  // Funil
+  const etapas = ["Triagem","Entrevista RH","Entrevista Fábrica","Proposta","Contratado","Reprovado","Desistiu"];
+  const cores   = ["#2F81F7","#0288D1","#00897B","#388E3C","#2E7D32","#C62828","#F78166"];
+  const maxVal  = Math.max(...etapas.map(e => cands.filter(c => c.etapa === e).length), 1);
+
+  document.getElementById("funil-chart").innerHTML = etapas.map((e, i) => {
+    const count = cands.filter(c => c.etapa === e).length;
+    const pct   = Math.round(count / maxVal * 100);
+    return `<div class="funil-item">
+      <div class="funil-label">${e}</div>
+      <div class="funil-bar-wrap"><div class="funil-bar" style="width:${pct}%;background:${cores[i]}"></div></div>
+      <div class="funil-count">${count}</div>
+    </div>`;
+  }).join("");
+
+  // Idiomas
+  const idiomaMap = {
+    "🇧🇷 Português": { flag: "🇧🇷", name: "Português", color: "#3FB950" },
+    "🇯🇵 日本語":    { flag: "🇯🇵", name: "日本語",    color: "#2F81F7" },
+    "🇺🇸 English":  { flag: "🇺🇸", name: "English",   color: "#BC8CFF" },
+    "🇵🇭 Filipino": { flag: "🇵🇭", name: "Filipino",  color: "#F0C000" },
+    "🇪🇸 Español":  { flag: "🇪🇸", name: "Español",   color: "#F78166" },
+  };
+  const maxId = Math.max(...Object.keys(idiomaMap).map(k => cands.filter(c => c.idioma === k).length), 1);
+
+  document.getElementById("idioma-bars").innerHTML = Object.entries(idiomaMap).map(([key, v]) => {
+    const count = cands.filter(c => c.idioma === key).length;
+    const pct = Math.round(count / maxId * 100);
+    return `<div class="idioma-item">
+      <div class="idioma-flag">${v.flag}</div>
+      <div class="idioma-name">${v.name}</div>
+      <div class="idioma-bar-wrap"><div class="idioma-bar" style="width:${pct}%;background:${v.color}"></div></div>
+      <div class="idioma-count">${count}</div>
+    </div>`;
+  }).join("");
+
+  // Ranking
+  const ranking = [...funcs].sort((a,b) => (b.totalIndicacoes||0) - (a.totalIndicacoes||0)).slice(0,5);
+  document.getElementById("ranking-list").innerHTML = ranking.length ? ranking.map((f, i) => `
+    <div class="ranking-item">
+      <div class="ranking-pos ${i===0?'pos-1':i===1?'pos-2':i===2?'pos-3':'pos-other'}">${i+1}</div>
+      <div><div class="ranking-name">${f.nome}</div><div class="ranking-dept">${f.departamento||""}</div></div>
+      <div class="ranking-num">${f.totalIndicacoes||0}</div>
+    </div>`) .join("") : "<div style='color:var(--text2);text-align:center;padding:20px'>Sem dados</div>";
+
+  // Bônus summary
+  const b1Agu = cands.filter(c => c.statusB1 === "Aguardando prazo").length;
+  const b1Pago= cands.filter(c => c.statusB1 === "Pago").length;
+  const b2Lib = cands.filter(c => c.statusB2 === "Liberado para pagamento").length;
+  const b2Pago= cands.filter(c => c.statusB2 === "Pago").length;
+
+  document.getElementById("bonus-summary").innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${[
+        ["Bônus 1 — Aguardando prazo", b1Agu,  "yellow"],
+        ["Bônus 1 — Liberado p/ pgto", b1Lib,  "orange"],
+        ["Bônus 1 — Pago",             b1Pago, "green" ],
+        ["Bônus 2 — Aguardando prazo", b2Lib,  "yellow"],
+        ["Bônus 2 — Liberado p/ pgto", b2Lib,  "orange"],
+        ["Bônus 2 — Pago",             b2Pago, "green" ],
+      ].map(([label, val, cls]) => `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:var(--text2)">${label}</span>
+          <span class="badge badge-${cls}">${val}</span>
+        </div>`).join("")}
+    </div>`;
+}
+
+// ============================================================
+//  CANDIDATOS
+// ============================================================
+function getBadgeEtapa(etapa) {
+  const map = {
+    "Triagem": "blue", "Entrevista RH": "blue", "Entrevista Fábrica": "blue",
+    "Proposta": "yellow", "Contratado": "green", "Reprovado": "red", "Desistiu": "gray"
+  };
+  return `<span class="badge badge-${map[etapa]||'gray'}">${etapa||""}</span>`;
+}
+
+function getBadgeStatus(status) {
+  const map = { "Ativo": "blue", "Contratado": "green", "Reprovado": "red", "Desistiu": "gray", "Em espera": "yellow" };
+  return `<span class="badge badge-${map[status]||'gray'}">${status||""}</span>`;
+}
+
+function renderCandidatos(lista) {
+  document.getElementById("tbody-candidatos").innerHTML = lista.length ?
+    lista.map(c => `<tr>
+      <td><span style="font-family:DM Mono;font-size:12px;color:var(--text2)">${c.id||""}</span></td>
+      <td style="font-weight:500">${c.nome||""}</td>
+      <td>${c.vaga||""}</td>
+      <td>${getBadgeEtapa(c.etapa)}</td>
+      <td>${getBadgeStatus(c.status)}</td>
+      <td>${c.idioma||""}</td>
+      <td>${c.provincia||""}</td>
+      <td>${c.nivelJP||""}</td>
+      <td><span class="badge badge-gray">${c.fonte||""}</span></td>
+      <td style="color:var(--text2);font-size:12px">${c.dataInscricao||""}</td>
+    </tr>`).join("") :
+    `<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:32px">Nenhum candidato encontrado</td></tr>`;
+}
+
+function filtrarCandidatos(busca) {
+  candidatosFiltrados = (dadosGlobais.candidatos||[]).filter(c =>
+    !busca || (c.nome||"").toLowerCase().includes(busca.toLowerCase()));
+  renderCandidatos(candidatosFiltrados);
+}
+
+function filtrarCandidatosPorEtapa(etapa) {
+  candidatosFiltrados = (dadosGlobais.candidatos||[]).filter(c => !etapa || c.etapa === etapa);
+  renderCandidatos(candidatosFiltrados);
+}
+
+function filtrarCandidatosPorIdioma(idioma) {
+  candidatosFiltrados = (dadosGlobais.candidatos||[]).filter(c => !idioma || c.idioma === idioma);
+  renderCandidatos(candidatosFiltrados);
+}
+
+// ============================================================
+//  VAGAS
+// ============================================================
+function renderVagas(lista) {
+  const getBadgeVaga = s => {
+    const m = { "Aberta": "green", "Em andamento": "blue", "Pausada": "yellow", "Encerrada": "gray", "Cancelada": "red" };
+    return `<span class="badge badge-${m[s]||'gray'}">${s||""}</span>`;
+  };
+  document.getElementById("tbody-vagas").innerHTML = lista.length ?
+    lista.map(v => `<tr>
+      <td style="font-family:DM Mono;font-size:12px;color:var(--text2)">${v.id||""}</td>
+      <td style="font-weight:500">${v.titulo||""}</td>
+      <td>${v.depto||""}</td>
+      <td>${getBadgeVaga(v.status)}</td>
+      <td style="text-align:center">${v.numVagas||0}</td>
+      <td style="text-align:center">${v.candidatos||0}</td>
+      <td>${v.responsavel||""}</td>
+      <td>${v.provincia||""}</td>
+      <td>${v.cidade||""}</td>
+      <td>¥${v.salario||""}</td>
+      <td style="color:var(--text2);font-size:12px">${v.prazo||""}</td>
+    </tr>`).join("") :
+    `<tr><td colspan="11" style="text-align:center;color:var(--text2);padding:32px">Nenhuma vaga encontrada</td></tr>`;
+}
+
+// ============================================================
+//  FUNCIONÁRIOS
+// ============================================================
+function renderFuncionarios(lista) {
+  const getBadgeFunc = s => {
+    const m = { "Ativo": "green", "Inativo": "gray", "Desligado": "red", "Férias": "yellow", "Afastado": "orange" };
+    return `<span class="badge badge-${m[s]||'gray'}">${s||""}</span>`;
+  };
+  const getBadgePremo = s => {
+    const m = { "Liberado para pagamento": "orange", "Pago": "green", "Aguardando prazo": "yellow", "Não elegível": "red" };
+    return `<span class="badge badge-${m[s]||'gray'}" style="font-size:10px">${s||"—"}</span>`;
+  };
+  document.getElementById("tbody-funcionarios").innerHTML = lista.length ?
+    lista.map(f => `<tr>
+      <td style="font-family:DM Mono;font-size:12px;color:var(--text2)">${f.registro||""}</td>
+      <td style="font-weight:500">${f.nome||""}</td>
+      <td>${f.departamento||""}</td>
+      <td>${getBadgeFunc(f.status)}</td>
+      <td>${f.idioma||""}</td>
+      <td style="text-align:center;font-weight:600">${f.totalIndicacoes||0}</td>
+      <td style="text-align:center;color:var(--green)">${f.indicacoesContratadas||0}</td>
+      <td>${getBadgePremo(f.statusBonus1)}</td>
+      <td>${getBadgePremo(f.statusBonus2)}</td>
+    </tr>`).join("") :
+    `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:32px">Nenhum funcionário encontrado</td></tr>`;
+}
+
+// ============================================================
+//  BÔNUS
+// ============================================================
+function renderBonus(cands) {
+  const comAdmissao = cands.filter(c => c.dataAdmissao);
+  const b1Lib = cands.filter(c => c.statusB1 === "Liberado para pagamento").length;
+  const b2Lib = cands.filter(c => c.statusB2 === "Liberado para pagamento").length;
+
+  document.getElementById("bonus-stats").innerHTML = [
+    { label: "Com Data Admissão",  value: comAdmissao.length, cls: "blue"   },
+    { label: "Bônus 1 — Liberado", value: b1Lib,              cls: "orange" },
+    { label: "Bônus 1 — Pago",     value: cands.filter(c=>c.statusB1==="Pago").length, cls: "green" },
+    { label: "Bônus 2 — Liberado", value: b2Lib,              cls: "orange" },
+    { label: "Bônus 2 — Pago",     value: cands.filter(c=>c.statusB2==="Pago").length, cls: "green" },
+  ].map(s => `<div class="stat-card ${s.cls}"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div></div>`).join("");
+
+  const getBadgeB = s => {
+    const m = { "Aguardando admissão": "gray", "Aguardando prazo": "yellow", "Liberado para pagamento": "orange", "Pago": "green", "Não elegível": "red" };
+    return `<span class="badge badge-${m[s]||'gray'}" style="font-size:10px">${s||"—"}</span>`;
+  };
+
+  document.getElementById("tbody-bonus").innerHTML = comAdmissao.length ?
+    comAdmissao.map(c => `<tr>
+      <td style="font-family:DM Mono;font-size:12px;color:var(--text2)">${c.id||""}</td>
+      <td style="font-weight:500">${c.nome||""}</td>
+      <td>${c.vaga||""}</td>
+      <td style="font-size:12px">${c.dataAdmissao||""}</td>
+      <td style="font-size:12px">${c.prazoBonus1||""}</td>
+      <td style="font-size:12px">${c.dataBonus1||""}</td>
+      <td>${getBadgeB(c.statusB1)}</td>
+      <td style="font-size:12px">${c.prazoBonus2||""}</td>
+      <td style="font-size:12px">${c.dataBonus2||""}</td>
+      <td>${getBadgeB(c.statusB2)}</td>
+    </tr>`).join("") :
+    `<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:32px">Nenhum candidato com data de admissão</td></tr>`;
+}
+
+// ============================================================
+//  REFERRAL
+// ============================================================
+function renderReferral(dados) {
+  const funcs = dados.funcionarios || [];
+  const inds  = dados.indicacoes   || [];
+
+  document.getElementById("referral-stats").innerHTML = [
+    { label: "Total Indicações",        value: inds.length,                                          cls: "purple" },
+    { label: "Indicações Contratadas",  value: inds.filter(i=>i.status==="Contratado").length,       cls: "green"  },
+    { label: "Taxa de Conversão",       value: inds.length ? Math.round(inds.filter(i=>i.status==="Contratado").length/inds.length*100)+"%" : "0%", cls: "blue" },
+    { label: "Prêmio 1 Liberado",       value: funcs.filter(f=>f.statusBonus1==="Liberado para pagamento").length, cls: "orange" },
+    { label: "Prêmio 2 Liberado",       value: funcs.filter(f=>f.statusBonus2==="Liberado para pagamento").length, cls: "orange" },
+  ].map(s => `<div class="stat-card ${s.cls}"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div></div>`).join("");
+
+  const ranking = [...funcs].sort((a,b)=>(b.totalIndicacoes||0)-(a.totalIndicacoes||0)).slice(0,10);
+  document.getElementById("ranking-full").innerHTML = ranking.map((f,i) => `
+    <div class="ranking-item">
+      <div class="ranking-pos ${i===0?'pos-1':i===1?'pos-2':i===2?'pos-3':'pos-other'}">${i+1}</div>
+      <div style="flex:1"><div class="ranking-name">${f.nome}</div><div class="ranking-dept">${f.departamento||""}</div></div>
+      <div style="text-align:right">
+        <div class="ranking-num">${f.totalIndicacoes||0}</div>
+        <div style="font-size:11px;color:var(--green)">${f.indicacoesContratadas||0} contratados</div>
+      </div>
+    </div>`).join("") || "<div style='color:var(--text2);text-align:center;padding:20px'>Sem dados</div>";
+
+  const getBadgeInd = s => {
+    const m = { "Contratado": "green", "Triagem": "blue", "Reprovado": "red", "Desistiu": "gray" };
+    return `<span class="badge badge-${m[s]||'gray'}">${s||""}</span>`;
+  };
+
+  document.getElementById("tbody-indicacoes").innerHTML = inds.length ?
+    inds.map(i => `<tr>
+      <td style="font-weight:500">${i.nomeFunc||""}</td>
+      <td>${i.nomeIndicado||""}</td>
+      <td>${i.vaga||""}</td>
+      <td>${getBadgeInd(i.status)}</td>
+      <td><span class="badge badge-${i.premio==='Pendente'?'yellow':'green'}">${i.premio||""}</span></td>
+      <td style="color:var(--text2);font-size:12px">${i.data||""}</td>
+    </tr>`).join("") :
+    `<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">Nenhuma indicação registrada</td></tr>`;
+}
+</script>
+</body>
+</html>
