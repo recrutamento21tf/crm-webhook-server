@@ -568,22 +568,13 @@ ${link}`);
       // Chama Apps Script para cancelar
       try {
         const r = await axios.get(`${APPS_SCRIPT_URL}?acao=cancelarCandidatura&telefone=${encodeURIComponent(de)}`, { timeout: 15000 });
+        const n2 = "\n";
         const cancelado = {
-          PT: "✅ Sua candidatura foi cancelada.
-
-Se mudar de ideia, acesse o formulário novamente. Boa sorte! 😊",
-          JP: "✅ 応募がキャンセルされました。
-
-気が変わったら、またフォームからご応募ください。頑張ってください！😊",
-          EN: "✅ Your application has been cancelled.
-
-If you change your mind, feel free to apply again. Good luck! 😊",
-          PH: "✅ Ang iyong aplikasyon ay nakansela na.
-
-Kung magbabago ang isip mo, maaari kang mag-apply muli. Good luck! 😊",
-          ES: "✅ Tu solicitud ha sido cancelada.
-
-Si cambias de opinión, puedes volver a postularte. ¡Buena suerte! 😊"
+          PT: "Candidatura cancelada!" + n2 + n2 + "Se mudar de ideia, acesse o formulario novamente. Boa sorte!",
+          JP: "Oubo ga kyanseru saremashita." + n2 + n2 + "Ki ga kawattara, mata oubo shite kudasai!",
+          EN: "Your application has been cancelled." + n2 + n2 + "If you change your mind, feel free to apply again. Good luck!",
+          PH: "Ang iyong aplikasyon ay nakansela na." + n2 + n2 + "Kung magbabago ang isip mo, maaari kang mag-apply muli. Good luck!",
+          ES: "Tu solicitud ha sido cancelada." + n2 + n2 + "Si cambias de opinion, puedes volver a postularte. Buena suerte!"
         };
         setEstado(de, { etapa: "menu", tipo: "candidato" });
         await enviarWhatsApp(de, cancelado[lang] || cancelado["PT"]);
