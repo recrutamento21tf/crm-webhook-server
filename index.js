@@ -433,15 +433,119 @@ async function processarMensagemLINE(userId, msg) {
     const mapIdioma = { "1": "PT", "2": "JP", "3": "EN", "4": "PH", "5": "ES" };
     if (mapIdioma[msg]) {
       const idioma  = mapIdioma[msg];
-      setEstado("line_" + userId, { idioma: idioma, etapa: "menu" });
+      // Verifica se ja esta identificado
       const usuario = await identificarUsuarioLINE(userId);
-      setEstado("line_" + userId, { tipo: usuario.tipo, dados: usuario.dados });
-      const menuKey = usuario.tipo === "candidato" ? "menu_candidato" :
-                      usuario.tipo === "funcionario" ? "menu_funcionario" : "menu_novo";
-      await enviarLINE(userId, t(menuKey, idioma));
+      if (usuario.tipo !== "novo") {
+        setEstado("line_" + userId, { idioma: idioma, etapa: "menu", tipo: usuario.tipo, dados: usuario.dados });
+        const menuKey = usuario.tipo === "candidato" ? "menu_candidato" : "menu_funcionario";
+        await enviarLINE(userId, t(menuKey, idioma));
+      } else {
+        setEstado("line_" + userId, { idioma: idioma, etapa: "identificacao" });
+        const msgId = {
+          PT: "Para identificar você, escolha:
+
+1️⃣ Meu número de telefone
+2️⃣ Meu e-mail cadastrado
+
+Sou novo — envie *novo*",
+          JP: "確認のため選択してください:
+
+1️⃣ 電話番号
+2️⃣ メールアドレス
+
+新規の方は *novo* と入力",
+          EN: "To identify you, choose:
+
+1️⃣ My phone number
+2️⃣ My registered email
+
+New? Type *novo*",
+          PH: "Para makilala ka, pumili:
+
+1️⃣ Aking numero ng telepono
+2️⃣ Aking email
+
+Bago? I-type ang *novo*",
+          ES: "Para identificarte, elige:
+
+1️⃣ Mi número de teléfono
+2️⃣ Mi correo electrónico
+
+¿Nuevo? Escribe *novo*"
+        };
+        await enviarLINE(userId, msgId[idioma] || msgId["PT"]);
+      }
       return;
     }
     await enviarLINE(userId, T.escolha_idioma["PT"]);
+    return;
+  }
+
+  // Identificacao LINE
+  if (estado.etapa === "identificacao") {
+    const lang = estado.idioma || "PT";
+    if (msg === "1") {
+      setEstado("line_" + userId, { etapa: "aguardando_telefone" });
+      const msgTel = { PT: "Digite seu número de telefone:", JP: "電話番号を入力してください:", EN: "Enter your phone number:", PH: "Ilagay ang iyong numero ng telepono:", ES: "Ingresa tu número de teléfono:" };
+      await enviarLINE(userId, msgTel[lang] || msgTel["PT"]);
+    } else if (msg === "2") {
+      setEstado("line_" + userId, { etapa: "aguardando_email" });
+      const msgEmail = { PT: "Digite seu e-mail cadastrado:", JP: "登録したメールアドレスを入力:", EN: "Enter your registered email:", PH: "Ilagay ang iyong registered na email:", ES: "Ingresa tu correo electrónico registrado:" };
+      await enviarLINE(userId, msgEmail[lang] || msgEmail["PT"]);
+    } else if (msgLower === "novo") {
+      setEstado("line_" + userId, { etapa: "menu", tipo: "novo", dados: {} });
+      await enviarLINE(userId, t("menu_novo", lang));
+    } else {
+      await enviarLINE(userId, t("nao_reconhecido", lang));
+    }
+    return;
+  }
+
+  // Aguardando telefone
+  if (estado.etapa === "aguardando_telefone") {
+    const lang = estado.idioma || "PT";
+    const cand = await buscarDadosPlanilha("Candidatos", "whatsapp", msg);
+    const func = await buscarDadosPlanilha("Funcionarios", "whatsapp", msg);
+    if (cand && cand.encontrado) {
+      await salvarLineUserId(userId, "candidato", cand.id);
+      setEstado("line_" + userId, { etapa: "menu", tipo: "candidato", dados: cand });
+      await enviarLINE(userId, "✅ " + cand.nome + "!
+
+" + t("menu_candidato", lang));
+    } else if (func && func.encontrado) {
+      await salvarLineUserId(userId, "funcionario", func.registro);
+      setEstado("line_" + userId, { etapa: "menu", tipo: "funcionario", dados: func });
+      await enviarLINE(userId, "✅ " + func.nome + "!
+
+" + t("menu_funcionario", lang));
+    } else {
+      const msgNot = { PT: "❌ Número não encontrado. Tente novamente ou envie *novo*:", JP: "❌ 番号が見つかりません。再試行するか *novo* と入力:", EN: "❌ Number not found. Try again or type *novo*:", PH: "❌ Hindi nahanap ang numero. Subukan muli o i-type ang *novo*:", ES: "❌ Número no encontrado. Intenta de nuevo o escribe *novo*:" };
+      await enviarLINE(userId, msgNot[lang] || msgNot["PT"]);
+    }
+    return;
+  }
+
+  // Aguardando email
+  if (estado.etapa === "aguardando_email") {
+    const lang = estado.idioma || "PT";
+    const cand = await buscarDadosPlanilha("Candidatos", "email", msg.trim().toLowerCase());
+    const func = await buscarDadosPlanilha("Funcionarios", "email", msg.trim().toLowerCase());
+    if (cand && cand.encontrado) {
+      await salvarLineUserId(userId, "candidato", cand.id);
+      setEstado("line_" + userId, { etapa: "menu", tipo: "candidato", dados: cand });
+      await enviarLINE(userId, "✅ " + cand.nome + "!
+
+" + t("menu_candidato", lang));
+    } else if (func && func.encontrado) {
+      await salvarLineUserId(userId, "funcionario", func.registro);
+      setEstado("line_" + userId, { etapa: "menu", tipo: "funcionario", dados: func });
+      await enviarLINE(userId, "✅ " + func.nome + "!
+
+" + t("menu_funcionario", lang));
+    } else {
+      const msgNot = { PT: "❌ E-mail não encontrado. Tente novamente ou envie *novo*:", JP: "❌ メールが見つかりません。再試行するか *novo* と入力:", EN: "❌ Email not found. Try again or type *novo*:", PH: "❌ Hindi nahanap ang email. Subukan muli o i-type ang *novo*:", ES: "❌ Email no encontrado. Intenta de nuevo o escribe *novo*:" };
+      await enviarLINE(userId, msgNot[lang] || msgNot["PT"]);
+    }
     return;
   }
 
@@ -510,8 +614,19 @@ ${link}`);
 }
 
 async function identificarUsuarioLINE(userId) {
-  // Por enquanto retorna novo — futuramente buscar LINE ID na planilha
+  // Busca LINE User ID na planilha
+  const cand = await buscarDadosPlanilha("Candidatos", "line_user_id", userId);
+  if (cand && cand.encontrado) return { tipo: "candidato", dados: cand };
+  const func = await buscarDadosPlanilha("Funcionarios", "line_user_id", userId);
+  if (func && func.encontrado) return { tipo: "funcionario", dados: func };
   return { tipo: "novo", dados: {} };
+}
+
+async function salvarLineUserId(userId, tipo, id) {
+  try {
+    await axios.get(`${APPS_SCRIPT_URL}?acao=salvarLineUserId&tipo=${tipo}&id=${encodeURIComponent(id)}&lineUserId=${encodeURIComponent(userId)}`, { timeout: 10000 });
+    console.log("LINE User ID salvo:", userId, tipo, id);
+  } catch (e) { console.error("Erro salvarLineUserId:", e.message); }
 }
 
 // ============================================================
