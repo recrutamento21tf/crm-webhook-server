@@ -561,6 +561,44 @@ ${link}`);
     return;
   }
 
+  // Confirmacao de cancelamento de candidatura
+  if (estado.etapa === "confirmar_cancelamento") {
+    const msgNorm = msg.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if (["SIM","YES","Y","S"].indexOf(msgNorm) !== -1) {
+      // Chama Apps Script para cancelar
+      try {
+        const r = await axios.get(`${APPS_SCRIPT_URL}?acao=cancelarCandidatura&telefone=${encodeURIComponent(de)}`, { timeout: 15000 });
+        const cancelado = {
+          PT: "✅ Sua candidatura foi cancelada.
+
+Se mudar de ideia, acesse o formulário novamente. Boa sorte! 😊",
+          JP: "✅ 応募がキャンセルされました。
+
+気が変わったら、またフォームからご応募ください。頑張ってください！😊",
+          EN: "✅ Your application has been cancelled.
+
+If you change your mind, feel free to apply again. Good luck! 😊",
+          PH: "✅ Ang iyong aplikasyon ay nakansela na.
+
+Kung magbabago ang isip mo, maaari kang mag-apply muli. Good luck! 😊",
+          ES: "✅ Tu solicitud ha sido cancelada.
+
+Si cambias de opinión, puedes volver a postularte. ¡Buena suerte! 😊"
+        };
+        setEstado(de, { etapa: "menu", tipo: "candidato" });
+        await enviarWhatsApp(de, cancelado[lang] || cancelado["PT"]);
+      } catch(e) {
+        await enviarWhatsApp(de, "❌ Erro ao cancelar. Tente novamente ou fale com o recrutador.");
+      }
+    } else if (["NAO","NO","N"].indexOf(msg.toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim()) !== -1) {
+      setEstado(de, { etapa: "menu" });
+      await enviarWhatsApp(de, t("menu_candidato", lang));
+    } else {
+      await enviarWhatsApp(de, "Digite *YES* para confirmar ou *NO* para cancelar.");
+    }
+    return;
+  }
+
   if (estado.etapa === "pergunta_indicacao" || estado.etapa === "recuperar_link") {
     if (["não","nao","no","hindi"].includes(msgLower)) {
       await enviarLINE(userId, t("link_sem_id", lang).replace("{link}", FORM_LINK));
