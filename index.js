@@ -561,6 +561,15 @@ ${link}`);
     return;
   }
 
+  // Opt-out SAIR — nosnavi e candidatos
+  if (msg.trim().toUpperCase() === "SAIR") {
+    try {
+      await axios.get(`${APPS_SCRIPT_URL}?acao=optOutNosNavi&telefone=${encodeURIComponent(de)}`, { timeout: 10000 });
+    } catch(e) { console.log("Erro opt-out:", e.message); }
+    await enviarWhatsApp(de, "Voce foi removido da lista. Nao enviaremos mais mensagens.");
+    return res.sendStatus(200);
+  }
+
   // Resposta de pesquisa de satisfacao
   if (["1","2","3","4"].indexOf(msg.trim()) !== -1 && estado.tipo === "candidato") {
     try {
