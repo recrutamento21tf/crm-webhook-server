@@ -352,6 +352,7 @@
   /* UPDATE TIME */
   .update-time { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -401,9 +402,40 @@
         <div class="loading"><div class="spinner"></div><br>Carregando...</div>
       </div>
 
-      <div class="grid-2">
+      <!-- CHARTS ROW -->
+      <div class="grid-2" style="margin-bottom:24px">
         <div class="card">
           <div class="card-header">📈 Funil de Seleção</div>
+          <div class="card-body" style="position:relative;height:280px">
+            <canvas id="chart-funil"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">🌐 Candidatos por Idioma</div>
+          <div class="card-body" style="position:relative;height:280px">
+            <canvas id="chart-idioma"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="card">
+          <div class="card-header">💼 Vagas por Status</div>
+          <div class="card-body" style="position:relative;height:280px">
+            <canvas id="chart-vagas"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">📣 Candidatos por Fonte</div>
+          <div class="card-body" style="position:relative;height:280px">
+            <canvas id="chart-fonte"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">📈 Funil de Seleção (barras)</div>
           <div class="card-body">
             <div class="funil" id="funil-chart"></div>
           </div>
@@ -639,6 +671,7 @@ function renderDashboard(dados) {
     </div>`).join("");
 
   document.getElementById("stats-grid").innerHTML = statsHtml;
+  setTimeout(function() { renderCharts(dados); }, 100);
 
   // Funil
   const etapas = ["Triagem","Entrevista RH","Entrevista Fábrica","Proposta","Contratado","Reprovado","Desistiu"];
@@ -706,6 +739,98 @@ function renderDashboard(dados) {
           <span class="badge badge-${cls}">${val}</span>
         </div>`).join("")}
     </div>`;
+}
+
+// ============================================================
+//  GRÁFICOS
+// ============================================================
+let chartFunil = null, chartIdioma = null, chartVagas = null, chartFonte = null;
+
+function renderCharts(dados) {
+  const cands = dados.candidatos || [];
+  const vagas = dados.vagas || [];
+
+  // Chart defaults
+  Chart.defaults.color = '#8B949E';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+  const etapas = ["Triagem","Entrevista RH","Entrevista Fábrica","Proposta","Contratado","Reprovado","Desistiu"];
+  const coresEtapas = ["#2F81F7","#0288D1","#00897B","#F57C00","#2E7D32","#C62828","#78909C"];
+  const countEtapas = etapas.map(e => cands.filter(c => c.etapa === e).length);
+
+  // 1. Funil — Horizontal Bar
+  if (chartFunil) chartFunil.destroy();
+  chartFunil = new Chart(document.getElementById("chart-funil"), {
+    type: "bar",
+    data: {
+      labels: etapas,
+      datasets: [{ data: countEtapas, backgroundColor: coresEtapas, borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "#30363D" }, ticks: { color: "#8B949E" } },
+        y: { grid: { display: false }, ticks: { color: "#E6EDF3" } }
+      }
+    }
+  });
+
+  // 2. Idioma — Doughnut
+  const idiomaLabels = ["Português","日本語","English","Filipino","Español"];
+  const idiomaKeys   = ["🇧🇷 Português","🇯🇵 日本語","🇺🇸 English","🇵🇭 Filipino","🇪🇸 Español"];
+  const idiomaData   = idiomaKeys.map(k => cands.filter(c => c.idioma === k).length);
+  const coresIdioma  = ["#3FB950","#2F81F7","#BC8CFF","#F0C000","#F78166"];
+
+  if (chartIdioma) chartIdioma.destroy();
+  chartIdioma = new Chart(document.getElementById("chart-idioma"), {
+    type: "doughnut",
+    data: { labels: idiomaLabels, datasets: [{ data: idiomaData, backgroundColor: coresIdioma, borderWidth: 2, borderColor: "#161B22" }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "right", labels: { color: "#E6EDF3", padding: 16, font: { size: 12 } } }
+      },
+      cutout: "65%"
+    }
+  });
+
+  // 3. Vagas — Pie
+  const vagasStatus = ["Aberta","Em andamento","Pausada","Encerrada","Cancelada"];
+  const vagasData   = vagasStatus.map(s => vagas.filter(v => v.status === s).length);
+  const coresVagas  = ["#3FB950","#2F81F7","#F0C000","#8B949E","#F85149"];
+
+  if (chartVagas) chartVagas.destroy();
+  chartVagas = new Chart(document.getElementById("chart-vagas"), {
+    type: "pie",
+    data: { labels: vagasStatus, datasets: [{ data: vagasData, backgroundColor: coresVagas, borderWidth: 2, borderColor: "#161B22" }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "right", labels: { color: "#E6EDF3", padding: 12, font: { size: 12 } } } }
+    }
+  });
+
+  // 4. Fonte — Bar
+  const fonteLabels = ["Indicação","Formulário","WhatsApp","LinkedIn","Indeed","Instagram","Outro"];
+  const fonteData   = fonteLabels.map(f => cands.filter(c => c.fonte === f).length);
+
+  if (chartFonte) chartFonte.destroy();
+  chartFonte = new Chart(document.getElementById("chart-fonte"), {
+    type: "bar",
+    data: {
+      labels: fonteLabels,
+      datasets: [{ data: fonteData, backgroundColor: "#2F81F7", borderRadius: 6, hoverBackgroundColor: "#58A6FF" }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#8B949E", maxRotation: 30 } },
+        y: { grid: { color: "#30363D" }, ticks: { color: "#8B949E" } }
+      }
+    }
+  });
 }
 
 // ============================================================
