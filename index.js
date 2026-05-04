@@ -98,8 +98,8 @@ const T = {
     ES: "👤 Un reclutador se pondrá en contacto pronto.\nHorario: lun-vie, 9h a 18h. 😊",
   },
   pergunta_foi_indicado: {
-    PT: "Você foi indicado por algum funcionário?\n\nResponda com o *ID do indicador* (ex: F001)\nou digite *NÃO* para receber o link sem indicação.",
-    JP: "従業員から紹介されましたか？\n\n*紹介者ID*（例: F001）を返信するか、\n紹介なしのリンクを受け取る場合は *NÃO* と入力してください。",
+    PT: "Voce foi indicado por algum funcionario?\n\nResponda com o *ID do indicador* (ex: F001)\nou digite *8* para receber o link sem indicacao.",
+    JP: "従業員から紹介されましたか？\n\n*紹介者ID*（例: F001）を返信するか、\n紹介なしの場合は *8* と入力してください。",
     EN: "Were you referred by an employee?\n\nReply with the *referrer ID* (e.g. F001)\nor type *NO* to receive the link without referral.",
     PH: "Ikaw ba ay na-refer ng isang empleyado?\n\nSumagot gamit ang *referrer ID* (hal. F001)\no i-type ang *HINDI* para makatanggap ng link nang walang referral.",
     ES: "¿Fuiste referido por algún empleado?\n\nResponde con el *ID del referidor* (ej: F001)\no escribe *NO* para recibir el enlace sin referido.",
@@ -119,8 +119,8 @@ const T = {
     ES: "✅ ¡Perfecto! Aquí está tu enlace personalizado:\n\n{link}\n\n¡Tu referido se registrará automáticamente! 😊",
   },
   id_invalido: {
-    PT: "❌ ID não encontrado. Verifique o ID com o funcionário que te indicou e tente novamente.\n\nOu digite *NÃO* para receber o link sem indicação.",
-    JP: "❌ IDが見つかりませんでした。紹介してくれた従業員にIDを確認して再試行してください。\n\n紹介なしのリンクを受け取る場合は *NÃO* と入力してください。",
+    PT: "❌ ID nao encontrado. Verifique com o funcionario que te indicou e tente novamente.\n\nOu digite *8* para receber o link sem indicacao.",
+    JP: "❌ IDが見つかりませんでした。紹介してくれた従業員にIDを確認して再試行してください。\n\n紹介なしの場合は *8* と入力してください。",
     EN: "❌ ID not found. Check the ID with the employee who referred you and try again.\n\nOr type *NO* to receive the link without referral.",
     PH: "❌ Hindi nahanap ang ID. I-check ang ID sa empleyado na nag-refer sa iyo at subukan muli.\n\nO i-type ang *HINDI* para makatanggap ng link nang walang referral.",
     ES: "❌ ID no encontrado. Verifica el ID con el empleado que te refirió e intenta de nuevo.\n\nO escribe *NO* para recibir el enlace sin referido.",
@@ -339,7 +339,7 @@ async function processarMensagem(de, msg) {
   //  ETAPA: Pergunta se foi indicado (novo contato)
   // ============================================================
   if (estado.etapa === "pergunta_indicacao") {
-    if (msgLower === "não" || msgLower === "nao" || msgLower === "no" || msgLower === "hindi") {
+    if (msg.trim() === "8") {
       const link = FORM_LINK;
       await enviarWhatsApp(de, t("link_sem_id", lang).replace("{link}", link));
       setEstado(de, { etapa: "menu" });
