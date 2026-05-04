@@ -610,15 +610,16 @@ ${link}`);
   }
 
   if (estado.etapa === "pergunta_indicacao" || estado.etapa === "recuperar_link") {
-    if (["não","nao","no","hindi"].includes(msgLower)) {
+    const inputMsgLine = msg.trim().toUpperCase();
+    if (inputMsgLine === "8") {
       await enviarLINE(userId, t("link_sem_id", lang).replace("{link}", FORM_LINK));
-      setEstado("line_" + userId, { etapa: "menu" });
+      setEstado("line_" + userId, { etapa: "menu", idioma: lang });
     } else {
-      const func = await buscarDadosPlanilha("Funcionarios", "registro", msg.trim().toUpperCase());
+      const func = await buscarDadosPlanilha("Funcionarios", "registro", inputMsgLine);
       if (func && func.encontrado) {
-        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${msg.trim().toUpperCase()}`;
+        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${inputMsgLine}`;
         await enviarLINE(userId, t("link_com_id", lang).replace("{link}", link));
-        setEstado("line_" + userId, { etapa: "menu" });
+        setEstado("line_" + userId, { etapa: "menu", idioma: lang });
       } else {
         await enviarLINE(userId, t("id_invalido", lang));
       }
