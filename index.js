@@ -443,11 +443,11 @@ async function processarMensagemLINE(userId, msg) {
         setEstado("line_" + userId, { idioma: idioma, etapa: "identificacao" });
         const n = "\n";
         const msgId = {
-          PT: "Para identificar voce, escolha:" + n + n + "1 - Meu numero de telefone" + n + "2 - Meu e-mail cadastrado" + n + n + "Sou novo - envie: novo",
-          JP: "\u78ba\u8a8dのため選択してください:" + n + n + "1 - 電話番号" + n + "2 - メールアドレス" + n + n + "新規の方は novo と入力",
-          EN: "To identify you, choose:" + n + n + "1 - My phone number" + n + "2 - My registered email" + n + n + "New? Type: novo",
-          PH: "Para makilala ka, pumili:" + n + n + "1 - Aking numero ng telepono" + n + "2 - Aking email" + n + n + "Bago? I-type ang: novo",
-          ES: "Para identificarte, elige:" + n + n + "1 - Mi numero de telefono" + n + "2 - Mi correo electronico" + n + n + "Nuevo? Escribe: novo"
+          PT: "Para identificar voce, escolha:" + n + n + "1 - Meu numero de telefone" + n + "2 - Meu e-mail cadastrado" + n + "9 - Sou novo" + n + n + "Digite o numero da opcao!",
+          JP: "\u78ba\u8a8dのため選択してください:" + n + n + "1 - 電話番号" + n + "2 - メールアドレス" + n + "9 - 新規の方" + n + n + "番号を入力してください！",
+          EN: "To identify you, choose:" + n + n + "1 - My phone number" + n + "2 - My registered email" + n + "9 - I am new" + n + n + "Type the option number!",
+          PH: "Para makilala ka, pumili:" + n + n + "1 - Aking numero ng telepono" + n + "2 - Aking email" + n + "9 - Bago ako" + n + n + "I-type ang numero ng opsyon!",
+          ES: "Para identificarte, elige:" + n + n + "1 - Mi numero de telefono" + n + "2 - Mi correo electronico" + n + "9 - Soy nuevo" + n + n + "Escribe el numero de la opcion!"
         };
         await enviarLINE(userId, msgId[idioma] || msgId["PT"]);
       }
@@ -468,7 +468,7 @@ async function processarMensagemLINE(userId, msg) {
       setEstado("line_" + userId, { etapa: "aguardando_email" });
       const msgEmail = { PT: "Digite seu e-mail cadastrado:", JP: "登録したメールアドレスを入力:", EN: "Enter your registered email:", PH: "Ilagay ang iyong registered na email:", ES: "Ingresa tu correo electrónico registrado:" };
       await enviarLINE(userId, msgEmail[lang] || msgEmail["PT"]);
-    } else if (msgLower === "novo") {
+    } else if (msg.trim() === "9") {
       setEstado("line_" + userId, { etapa: "menu", tipo: "novo", dados: {} });
       await enviarLINE(userId, t("menu_novo", lang));
     } else {
@@ -491,7 +491,7 @@ async function processarMensagemLINE(userId, msg) {
       setEstado("line_" + userId, { etapa: "menu", tipo: "funcionario", dados: func });
       await enviarLINE(userId, "✅ " + func.nome + "!\n\n" + t("menu_funcionario", lang));
     } else {
-      const msgNot = { PT: "❌ Número não encontrado. Tente novamente ou envie *novo*:", JP: "❌ 番号が見つかりません。再試行するか *novo* と入力:", EN: "❌ Number not found. Try again or type *novo*:", PH: "❌ Hindi nahanap ang numero. Subukan muli o i-type ang *novo*:", ES: "❌ Número no encontrado. Intenta de nuevo o escribe *novo*:" };
+      const msgNot = { PT: "❌ Numero nao encontrado. Tente novamente ou digite *9* para novo cadastro:", JP: "❌ 番号が見つかりません。再試行するか *9* を入力してください：", EN: "❌ Number not found. Try again or type *9* for new registration:", PH: "❌ Hindi nahanap ang numero. Subukan muli o i-type ang *9* para sa bagong pagpaparehistro:", ES: "❌ Numero no encontrado. Intenta de nuevo o escribe *9* para nuevo registro:" };
       await enviarLINE(userId, msgNot[lang] || msgNot["PT"]);
     }
     return;
@@ -511,7 +511,7 @@ async function processarMensagemLINE(userId, msg) {
       setEstado("line_" + userId, { etapa: "menu", tipo: "funcionario", dados: func });
       await enviarLINE(userId, "✅ " + func.nome + "!\n\n" + t("menu_funcionario", lang));
     } else {
-      const msgNot = { PT: "❌ E-mail não encontrado. Tente novamente ou envie *novo*:", JP: "❌ メールが見つかりません。再試行するか *novo* と入力:", EN: "❌ Email not found. Try again or type *novo*:", PH: "❌ Hindi nahanap ang email. Subukan muli o i-type ang *novo*:", ES: "❌ Email no encontrado. Intenta de nuevo o escribe *novo*:" };
+      const msgNot = { PT: "❌ Email nao encontrado. Tente novamente ou digite *9* para novo cadastro:", JP: "❌ メールが見つかりません。再試行するか *9* を入力してください：", EN: "❌ Email not found. Try again or type *9* for new registration:", PH: "❌ Hindi nahanap ang email. Subukan muli o i-type ang *9* para sa bagong pagpaparehistro:", ES: "❌ Email no encontrado. Intenta de nuevo o escribe *9* para nuevo registro:" };
       await enviarLINE(userId, msgNot[lang] || msgNot["PT"]);
     }
     return;
