@@ -361,7 +361,7 @@ async function processarMensagem(de, msg) {
   //  ETAPA: Recuperar link (candidato perdeu o link)
   // ============================================================
   if (estado.etapa === "recuperar_link") {
-    if (msgLower === "não" || msgLower === "nao" || msgLower === "no" || msgLower === "hindi") {
+    if (msg.trim() === "8") {
       const link = FORM_LINK;
       await enviarWhatsApp(de, t("link_sem_id", lang).replace("{link}", link));
       setEstado(de, { etapa: "menu" });
