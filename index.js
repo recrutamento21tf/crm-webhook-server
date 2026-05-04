@@ -339,17 +339,18 @@ async function processarMensagem(de, msg) {
   //  ETAPA: Pergunta se foi indicado (novo contato)
   // ============================================================
   if (estado.etapa === "pergunta_indicacao") {
-    if (msg.trim() === "8") {
+    const inputMsg = msg.trim().toUpperCase();
+    if (inputMsg === "8") {
       const link = FORM_LINK;
       await enviarWhatsApp(de, t("link_sem_id", lang).replace("{link}", link));
-      setEstado(de, { etapa: "menu" });
+      setEstado(de, { etapa: "menu", idioma: lang });
     } else {
       // Verifica se o ID existe na planilha
-      const funcionario = await buscarDadosPlanilha("Funcionarios", "registro", msg.trim().toUpperCase());
+      const funcionario = await buscarDadosPlanilha("Funcionarios", "registro", inputMsg);
       if (funcionario && funcionario.encontrado) {
-        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${msg.trim().toUpperCase()}`;
+        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${inputMsg}`;
         await enviarWhatsApp(de, t("link_com_id", lang).replace("{link}", link));
-        setEstado(de, { etapa: "menu" });
+        setEstado(de, { etapa: "menu", idioma: lang });
       } else {
         await enviarWhatsApp(de, t("id_invalido", lang));
       }
@@ -361,16 +362,17 @@ async function processarMensagem(de, msg) {
   //  ETAPA: Recuperar link (candidato perdeu o link)
   // ============================================================
   if (estado.etapa === "recuperar_link") {
-    if (msg.trim() === "8") {
+    const inputMsg2 = msg.trim().toUpperCase();
+    if (inputMsg2 === "8") {
       const link = FORM_LINK;
       await enviarWhatsApp(de, t("link_sem_id", lang).replace("{link}", link));
-      setEstado(de, { etapa: "menu" });
+      setEstado(de, { etapa: "menu", idioma: lang });
     } else {
-      const funcionario = await buscarDadosPlanilha("Funcionarios", "registro", msg.trim().toUpperCase());
+      const funcionario = await buscarDadosPlanilha("Funcionarios", "registro", inputMsg2);
       if (funcionario && funcionario.encontrado) {
-        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${msg.trim().toUpperCase()}`;
+        const link = `${FORM_LINK}?usp=pp_url&entry.1282499803=${inputMsg2}`;
         await enviarWhatsApp(de, t("link_com_id", lang).replace("{link}", link));
-        setEstado(de, { etapa: "menu" });
+        setEstado(de, { etapa: "menu", idioma: lang });
       } else {
         await enviarWhatsApp(de, t("id_invalido", lang));
       }
