@@ -210,6 +210,7 @@ async function listarVagas(idioma) {
       const lb = labels[idioma] || labels["PT"];
       let lista = lb.titulo + "\n\n";
       // Traduz cada vaga
+      console.log("VAGAS DEBUG primeira vaga:", JSON.stringify(r.data.vagas[0]));
       for (const v of r.data.vagas) {
         // Usa traducao fixa se disponivel, senao traduz automaticamente
         let titulo = v.titulo;
