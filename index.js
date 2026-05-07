@@ -211,13 +211,22 @@ async function listarVagas(idioma) {
       let lista = lb.titulo + "\n\n";
       // Traduz cada vaga
       for (const v of r.data.vagas) {
-        const titulo = await traduzir(v.titulo, idioma);
-        const desc   = v.descricao ? await traduzir(v.descricao, idioma) : "";
+        // Usa traducao fixa se disponivel, senao traduz automaticamente
+        let titulo = v.titulo;
+        if      (idioma === "JP" && v.titulo_jp) titulo = v.titulo_jp;
+        else if (idioma === "EN" && v.titulo_en) titulo = v.titulo_en;
+        else if (idioma === "PH" && v.titulo_ph) titulo = v.titulo_ph;
+        else if (idioma === "ES" && v.titulo_es) titulo = v.titulo_es;
+        else titulo = await traduzir(v.titulo, idioma);
+
         lista += `▪️ *${titulo}*`;
         if (v.provincia) lista += ` — ${v.provincia}`;
         if (v.cidade)    lista += `/${v.cidade}`;
         if (v.salario)   lista += ` | ¥${v.salario}`;
-        if (desc)        lista += `\n${desc}`;
+        if (v.descricao) {
+          const nivelLabel = { PT: "Japones", JP: "日本語レベル", EN: "Japanese", PH: "Hapon", ES: "Japones" };
+          lista += `\n${nivelLabel[idioma] || "Japones"}: ${v.descricao}`;
+        }
         lista += "\n\n";
       }
       return lista + lb.rodape;
