@@ -224,8 +224,22 @@ async function listarVagas(idioma) {
         if (v.cidade)    lista += `/${v.cidade}`;
         if (v.salario)   lista += ` | ¥${v.salario}`;
         if (v.descricao) {
-          const nivelLabel = { PT: "Japones", JP: "日本語レベル", EN: "Japanese", PH: "Hapon", ES: "Japones" };
-          lista += `\n${nivelLabel[idioma] || "Japones"}: ${v.descricao}`;
+          // Mapa de traducoes fixas para nivel de japones
+          const nivelMap = {
+            "Avancado (N1/N2)":      { PT: "Japones: Avancado (N1/N2)",      JP: "日本語レベル: 上級 (N1/N2)",      EN: "Japanese: Advanced (N1/N2)",      PH: "Hapon: Advanced (N1/N2)",      ES: "Japones: Avanzado (N1/N2)" },
+            "Avançado (N1/N2)":      { PT: "Japones: Avancado (N1/N2)",      JP: "日本語レベル: 上級 (N1/N2)",      EN: "Japanese: Advanced (N1/N2)",      PH: "Hapon: Advanced (N1/N2)",      ES: "Japones: Avanzado (N1/N2)" },
+            "Intermediario (N3/N4)": { PT: "Japones: Intermediario (N3/N4)", JP: "日本語レベル: 中級 (N3/N4)",      EN: "Japanese: Intermediate (N3/N4)", PH: "Hapon: Intermediate (N3/N4)", ES: "Japones: Intermedio (N3/N4)" },
+            "Intermediário (N3/N4)": { PT: "Japones: Intermediario (N3/N4)", JP: "日本語レベル: 中級 (N3/N4)",      EN: "Japanese: Intermediate (N3/N4)", PH: "Hapon: Intermediate (N3/N4)", ES: "Japones: Intermedio (N3/N4)" },
+            "Basico (N5)":           { PT: "Japones: Basico (N5)",           JP: "日本語レベル: 初級 (N5)",         EN: "Japanese: Basic (N5)",           PH: "Hapon: Basic (N5)",           ES: "Japones: Basico (N5)" },
+            "Básico (N5)":           { PT: "Japones: Basico (N5)",           JP: "日本語レベル: 初級 (N5)",         EN: "Japanese: Basic (N5)",           PH: "Hapon: Basic (N5)",           ES: "Japones: Basico (N5)" },
+            "Nenhum":                { PT: "Japones: Nenhum",                JP: "日本語レベル: 不要",              EN: "Japanese: None required",        PH: "Hapon: Wala",                 ES: "Japones: Ninguno" },
+          };
+          const nivelTrad = nivelMap[v.descricao];
+          if (nivelTrad) {
+            lista += `\n${nivelTrad[idioma] || nivelTrad["PT"]}`;
+          } else {
+            lista += `\nJapones: ${v.descricao}`;
+          }
         }
         lista += "\n\n";
       }
