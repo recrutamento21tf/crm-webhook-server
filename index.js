@@ -201,11 +201,11 @@ async function listarVagas(idioma) {
     const r = await axios.get(`${APPS_SCRIPT_URL}?aba=Vagas&status=Aberta&idioma=${idioma}`, { timeout: 15000 });
     if (r.data && r.data.vagas && r.data.vagas.length > 0) {
       const labels = {
-        PT: { titulo: "📢 *Vagas Abertas:*",       rodape: "\nCompartilhe o link de indicação!",  vazio: "Não há vagas abertas no momento." },
-        JP: { titulo: "📢 *求人情報:*",             rodape: "\n紹介リンクをシェアしてください！",    vazio: "現在、募集中の求人はありません。" },
-        EN: { titulo: "📢 *Open Positions:*",       rodape: "\nShare your referral link!",          vazio: "There are no open positions at the moment." },
-        PH: { titulo: "📢 *Bukas na Posisyon:*",    rodape: "\nI-share ang iyong referral link!",   vazio: "Walang bukas na posisyon sa ngayon." },
-        ES: { titulo: "📢 *Puestos Disponibles:*",  rodape: "\n¡Comparte tu enlace de referido!",   vazio: "No hay puestos disponibles en este momento." }
+        PT: { titulo: "📢 *Vagas Abertas:*",       rodape: "\nCompartilhe com seus amigos!\nhttps://docs.google.com/forms/d/e/1FAIpQLSdabmBBvwTTdYJxgmjdtX1xCAhENCnppwukk8rrQIw_0reBnA/viewform", vazio: "Não há vagas abertas no momento." },
+        JP: { titulo: "📢 *求人情報:*",             rodape: "\nお友達にシェアしてください！\nhttps://docs.google.com/forms/d/e/1FAIpQLSdabmBBvwTTdYJxgmjdtX1xCAhENCnppwukk8rrQIw_0reBnA/viewform", vazio: "現在、募集中の求人はありません。" },
+        EN: { titulo: "📢 *Open Positions:*",       rodape: "\nShare with your friends!\nhttps://docs.google.com/forms/d/e/1FAIpQLSdabmBBvwTTdYJxgmjdtX1xCAhENCnppwukk8rrQIw_0reBnA/viewform",   vazio: "There are no open positions at the moment." },
+        PH: { titulo: "📢 *Bukas na Posisyon:*",    rodape: "\nI-share sa iyong mga kaibigan!\nhttps://docs.google.com/forms/d/e/1FAIpQLSdabmBBvwTTdYJxgmjdtX1xCAhENCnppwukk8rrQIw_0reBnA/viewform", vazio: "Walang bukas na posisyon sa ngayon." },
+        ES: { titulo: "📢 *Puestos Disponibles:*",  rodape: "\n¡Comparte con tus amigos!\nhttps://docs.google.com/forms/d/e/1FAIpQLSdabmBBvwTTdYJxgmjdtX1xCAhENCnppwukk8rrQIw_0reBnA/viewform", vazio: "No hay puestos disponibles en este momento." }
       };
       const lb = labels[idioma] || labels["PT"];
       let lista = lb.titulo + "\n\n";
