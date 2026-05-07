@@ -210,7 +210,6 @@ async function listarVagas(idioma) {
       const lb = labels[idioma] || labels["PT"];
       let lista = lb.titulo + "\n\n";
       // Traduz cada vaga
-      console.log("VAGAS DEBUG primeira vaga:", JSON.stringify(r.data.vagas[0]));
       for (const v of r.data.vagas) {
         // Usa traducao fixa se disponivel, senao traduz automaticamente
         let titulo = v.titulo;
@@ -221,8 +220,11 @@ async function listarVagas(idioma) {
         else titulo = await traduzir(v.titulo, idioma);
 
         lista += `▪️ *${titulo}*`;
-        if (v.provincia) lista += ` — ${v.provincia}`;
-        if (v.cidade)    lista += `/${v.cidade}`;
+        // Usa provincia/cidade em japones se disponivel
+        const prov  = (idioma === "JP" && v.provincia_jp) ? v.provincia_jp : v.provincia;
+        const cid   = (idioma === "JP" && v.cidade_jp)    ? v.cidade_jp    : v.cidade;
+        if (prov) lista += ` — ${prov}`;
+        if (cid)  lista += `/${cid}`;
         if (v.salario)   lista += ` | ¥${v.salario}`;
         if (v.descricao) {
           // Mapa de traducoes fixas para nivel de japones
