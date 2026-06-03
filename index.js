@@ -6,7 +6,7 @@ app.use(express.json());
 // ============================================================
 //  ⚙️  CONFIGURAÇÕES
 // ============================================================
-const EVOLUTION_API_URL  = "https://crm-evolution-api.onrender.com";
+const EVOLUTION_API_URL  = "https://evolution-api-v2-jm89.onrender.com";
 const EVOLUTION_INSTANCE = "recrutamento";
 const EVOLUTION_API_KEY  = "CrmRh@2026";
 const SPREADSHEET_ID     = "1Z1HHv264Tvda117uPK-4flFwrg-_Kig4BG2I1qcst4w";
